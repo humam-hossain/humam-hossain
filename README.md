@@ -8,14 +8,16 @@ Skills: Python / C++ / Java / JavaScript
 
 <!-- [![trophy](https://github-profile-trophy.vercel.app/?username=humam-hossain)](https://github.com/ryo-ma/github-profile-trophy) -->
 
-[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=humam-hossain&layout=compact&langs_count=10&theme=radical)](https://github.com/humam-hossain/)
+![GitHub streak stats](https://streak-stats.demolab.com/?user=humam-hossain&theme=radical)
 
-![GitHub stats](https://github-readme-stats.vercel.app/api?username=humam-hossain&show_icons=true&theme=radical)
+<img align="left" width="47%" src="https://github-readme-stats.vercel.app/api?username=humam-hossain&show_icons=true&theme=radical">
+
+<img align="left" width="47%" src="https://github-readme-stats.vercel.app/api/top-langs/?username=humam-hossain&layout=compact&langs_count=10&theme=radical">
+
 
 <!-- ![GitHub Activity Graph](https://activity-graph.herokuapp.com/graph?username=humam-hossain&theme=radical) -->
 
 ![GitHub metrics](https://metrics.lecoq.io/humam-hossain)
 
-![GitHub streak stats](https://streak-stats.demolab.com/?user=humam-hossain&theme=radical)
 
 ![Profile views](https://gpvc.arturio.dev/humam-hossain)
