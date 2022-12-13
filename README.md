@@ -12,7 +12,7 @@ Skills: Python / C++ / Java / JavaScript
 
 ![GitHub stats](https://github-readme-stats.vercel.app/api?username=humam-hossain&show_icons=true&theme=radical)
 
-![GitHub Activity Graph](https://activity-graph.herokuapp.com/graph?username=humam-hossain&theme=radical)
+<!-- ![GitHub Activity Graph](https://activity-graph.herokuapp.com/graph?username=humam-hossain&theme=radical) -->
 
 ![GitHub metrics](https://metrics.lecoq.io/humam-hossain)
 
