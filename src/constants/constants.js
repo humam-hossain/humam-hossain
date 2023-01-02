@@ -431,9 +431,9 @@ export const projects = [
 ];
 
 export const TimeLineData = [
-  { year: 2017, text: "Starting my journey as a WordPress developer" },
-  { year: 2018, text: "Working as a front-end WordPress developer" },
-  { year: 2019, text: "Working as a full stack WordPress developer" },
-  { year: 2021, text: "Diving completely into ReactJS World" },
   { year: 2022, text: "Starting my journey as a React developer" },
+  { year: 2021, text: "Diving completely into ReactJS World" },
+  { year: 2019, text: "Working as a full stack WordPress developer" },
+  { year: 2018, text: "Working as a front-end WordPress developer" },
+  { year: 2017, text: "Starting my journey as a WordPress developer" }
 ];
