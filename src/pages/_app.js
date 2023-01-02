@@ -12,7 +12,7 @@ function App({ Component, pageProps }) {
     <>
       <ThemeProvider theme={{darkMode: darkModeActive, ...theme}}>
         <NextSeo
-          title="Muhammed Humam Hossain's Portfolio"
+          title="Muhammed Humam Hossain"
           description="The personal website for Muhammed Humam Hossain, Full-Stack developer."
           openGraph={{
             type: 'website',

@@ -7,28 +7,28 @@ export default function SocialMedia({inFooter}) {
   return (
     <SocialContainer inFooter={inFooter}>
       <SocialIcons
-        href="https://github.com/Infvyr"
+        href="https://github.com/humam-hossain"
         title="Visit my github profile"
         target="_blank"
         rel="noopener noreferrer">
         <AiFillGithub size="3rem"/>
       </SocialIcons>
       <SocialIcons
-        href="https://www.linkedin.com/in/vasile-novatchii"
+        href="https://www.linkedin.com/in/humam-hossain-7ab762230/"
         title="Contact me on LinkedIn"
         target="_blank"
         rel="noopener noreferrer">
         <AiFillLinkedin size="3rem"/>
       </SocialIcons>
       <SocialIcons
-        href="https://t.me/infvyr"
+        href="https://t.me/humamhossain"
         title="Contact me on Telegram"
         target="_blank"
         rel="noopener noreferrer">
         <FaTelegramPlane size="3rem"/>
       </SocialIcons>
       <SocialIcons
-        href="mailto://vnovatchi@gmail.com"
+        href="mailto://humam.hossain.e@gmail.com"
         title="Send directly an email"
         target="_blank"
         rel="noopener noreferrer">

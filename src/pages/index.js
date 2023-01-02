@@ -1,5 +1,3 @@
-import Head from "next/head"
-
 import {Layout} from '../layout/Layout';
 import {Section} from '../styles/GlobalComponents';
 // import Accomplishments from '../components/Accomplishments/Accomplishments';
@@ -11,11 +9,7 @@ import Timeline from '../components/TimeLine/TimeLine';
 
 const Home = () => {
   return (
-    <>
-      <Head>
-        <title>Muhammed Humam Hossain</title>
-      </Head>
-    
+    <>    
       <Layout>
         <Section grid center>
           <Hero />

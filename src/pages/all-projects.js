@@ -42,18 +42,14 @@ const AllProjects = () => {
   };
 
   return (
-    <>
-      <Head>
-        <title>All Projects | Muhammed Humam Hossain</title>
-      </Head>
-    
+    <>   
       <Layout>
         <Section nopadding id="projects">
           <NextSeo
-            title="Novatchii Vasile's Projects"
-            description="Check out Novatchii Vasile's projects"
+            title="All Projects | Muhammed Humam Hossain"
+            description="Check out Muhammed Humam Hossain's projects"
             openGraph={{
-              description: "Check out Novatchii Vasile's projects",
+              description: "Check out Muhammed Humam Hossain's projects",
             }}
           />
 
