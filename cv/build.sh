@@ -22,12 +22,15 @@ done
 echo "Dependencies are satisfied."
 
 # --- Build ---
-echo "--- Building CV PDF ---"
+# Default: general CV. Pass a basename to build a variant, e.g.:
+#   ./build.sh cv_humam_hossain_sqa
+TARGET="${1:-cv_humam_hossain}"
+echo "--- Building CV PDF: ${TARGET}.tex ---"
 set -x # Echo commands
 
 mkdir -p bin
-xelatex cv_humam_hossain.tex
-xelatex cv_humam_hossain.tex
+xelatex "${TARGET}.tex"
+xelatex "${TARGET}.tex"
 
 # --- Cleanup ---
 set +x
@@ -36,4 +39,4 @@ echo "--- Moving build files to bin/ ---"
 shopt -s nullglob
 mv -f -- *.aux *.log *.out bin/
 
-echo "--- Build complete! ---"
+echo "--- Build complete: ${TARGET}.pdf ---"
