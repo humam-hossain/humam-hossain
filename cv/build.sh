@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+cd "$(dirname "$0")"
+
 # This script automates the building of the LaTeX CV.
 # It's designed for Arch Linux and uses 'pacman' for dependency management.
 # It will check for required TeX Live packages and install them if they are missing.
@@ -28,7 +30,7 @@ TARGET="${1:-cv_humam_hossain}"
 echo "--- Building CV PDF: ${TARGET}.tex ---"
 set -x # Echo commands
 
-mkdir -p bin
+mkdir -p bin outputs
 xelatex "${TARGET}.tex"
 xelatex "${TARGET}.tex"
 
@@ -39,4 +41,7 @@ echo "--- Moving build files to bin/ ---"
 shopt -s nullglob
 mv -f -- *.aux *.log *.out bin/
 
-echo "--- Build complete: ${TARGET}.pdf ---"
+echo "--- Moving PDF to outputs/ ---"
+mv -f "${TARGET}.pdf" outputs/
+
+echo "--- Build complete: outputs/${TARGET}.pdf ---"
