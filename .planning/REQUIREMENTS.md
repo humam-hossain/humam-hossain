@@ -69,6 +69,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | HERO-03 | Phase 1 | Pending |
 | HERO-04 | Phase 2 | Pending |
 | HERO-05 | Phase 2 | Pending |
+| AUTO-01 | Phase 2 | Pending |
 | PROJ-01 | Phase 3 | Pending |
 | PROJ-02 | Phase 3 | Pending |
 | PROJ-03 | Phase 3 | Pending |
@@ -78,7 +79,6 @@ Which phases cover which requirements. Populated during roadmap creation.
 | METRIC-04 | Phase 4 | Pending |
 | CONTENT-01 | Phase 5 | Pending |
 | CONTENT-02 | Phase 5 | Pending |
-| AUTO-01 | Phase 6 | Pending |
 | AUTO-02 | Phase 6 | Pending |
 | AUTO-03 | Phase 6 | Pending |
 
