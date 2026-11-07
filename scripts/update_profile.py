@@ -8,6 +8,8 @@ Zero external dependencies.
 
 from __future__ import annotations
 
+import calendar
+import datetime
 import json
 import os
 from pathlib import Path
@@ -15,6 +17,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
@@ -154,15 +157,383 @@ def execute_graphql(
     raise RuntimeError("Max retries exceeded")
 
 
+def _add_calendar_months(dt: datetime.datetime, months: int) -> datetime.datetime:
+    """Adds integer calendar months to dt, clamping to the last valid day of the target month."""
+    total_months = dt.month - 1 + months
+    year = dt.year + total_months // 12
+    month = total_months % 12 + 1
+    day = min(dt.day, calendar.monthrange(year, month)[1])
+    return dt.replace(year=year, month=month, day=day)
+
+
+def compute_calendar_diff(start: datetime.datetime, end: datetime.datetime) -> tuple[int, int, int]:
+    """
+    Computes exact calendar (years, months, days) elapsed between two UTC datetimes.
+    Matches dateutil.relativedelta behavior across leap years and month boundaries.
+    """
+    if end < start:
+        return (0, 0, 0)
+
+    # 1. Full years
+    years = end.year - start.year
+    candidate = _add_calendar_months(start, years * 12)
+    if candidate > end:
+        years -= 1
+        candidate = _add_calendar_months(start, years * 12)
+
+    # 2. Full months
+    months = 0
+    while True:
+        next_candidate = _add_calendar_months(candidate, 1)
+        if next_candidate <= end:
+            candidate = next_candidate
+            months += 1
+        else:
+            break
+
+    # 3. Remaining days
+    days = (end.date() - candidate.date()).days
+    return (years, months, days)
+
+
+def format_uptime_neofetch(years: int, months: int, days: int) -> str:
+    """
+    Formats elapsed duration adhering to Neofetch style:
+    - Intelligent pluralization ('1 yr' vs '2 yrs', '1 mo' vs '3 mos', '1 day' vs '12 days')
+    - Stable 3-unit layout (e.g. '4 yrs, 0 mos, 12 days')
+    """
+    yr_str = "1 yr" if years == 1 else f"{years} yrs"
+    mo_str = "1 mo" if months == 1 else f"{months} mos"
+    day_str = "1 day" if days == 1 else f"{days} days"
+    return f"{yr_str}, {mo_str}, {day_str}"
+
+
+def parse_iso_datetime(iso_str: str) -> datetime.datetime:
+    """Parses ISO timestamp string into UTC timezone-aware datetime."""
+    clean_str = iso_str.replace("Z", "+00:00")
+    dt = datetime.datetime.fromisoformat(clean_str)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt.astimezone(datetime.timezone.utc)
+
+
+def get_baseline_date(config: dict, cache: dict, token: str | None = None) -> datetime.datetime:
+    """
+    Resolves baseline start date in priority order:
+    1. config.telemetry.baseline_override_date
+    2. cache.baseline.first_commit_date
+    3. GraphQL discovery query (earliest commit contribution or createdAt)
+    4. Fallback default (2020-09-18T07:00:00Z)
+    """
+    # 1. Config override
+    override = config.get("telemetry", {}).get("baseline_override_date")
+    if override:
+        return parse_iso_datetime(override)
+
+    # 2. Cached baseline
+    cached_date = cache.get("baseline", {}).get("first_commit_date")
+    if cached_date:
+        return parse_iso_datetime(cached_date)
+
+    # 3. GraphQL discovery
+    if token:
+        try:
+            baseline_info_query = """
+            query GetBaselineInfo {
+              viewer {
+                login
+                createdAt
+                contributionsCollection {
+                  contributionYears
+                }
+              }
+            }
+            """
+            data = execute_graphql(baseline_info_query, token=token)
+            viewer = data.get("data", {}).get("viewer", {})
+            contrib_years = viewer.get("contributionsCollection", {}).get("contributionYears", [])
+            created_at_str = viewer.get("createdAt")
+
+            if contrib_years:
+                earliest_year = min(contrib_years)
+                commit_query = """
+                query GetEarliestCommit($from: DateTime!, $to: DateTime!) {
+                  viewer {
+                    contributionsCollection(from: $from, to: $to) {
+                      commitContributionsByRepository(maxRepositories: 100) {
+                        contributions(first: 100, orderBy: {field: OCCURRED_AT, direction: ASC}) {
+                          nodes {
+                            occurredAt
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                """
+                c_vars = {
+                  "from": f"{earliest_year}-01-01T00:00:00Z",
+                  "to": f"{earliest_year}-12-31T23:59:59Z",
+                }
+                c_data = execute_graphql(commit_query, variables=c_vars, token=token)
+                repos = (
+                    c_data.get("data", {})
+                    .get("viewer", {})
+                    .get("contributionsCollection", {})
+                    .get("commitContributionsByRepository", [])
+                )
+                occurred_dates = []
+                for repo in repos:
+                    for node in repo.get("contributions", {}).get("nodes", []):
+                        if "occurredAt" in node:
+                            occurred_dates.append(node["occurredAt"])
+
+                if occurred_dates:
+                    earliest_commit = min(occurred_dates)
+                    cache.setdefault("baseline", {})["first_commit_date"] = earliest_commit
+                    cache["baseline"]["source"] = "contributionsCollection"
+                    if created_at_str:
+                        cache["baseline"]["account_created_at"] = created_at_str
+                    return parse_iso_datetime(earliest_commit)
+
+            if created_at_str:
+                cache.setdefault("baseline", {})["first_commit_date"] = created_at_str
+                cache["baseline"]["account_created_at"] = created_at_str
+                cache["baseline"]["source"] = "createdAt"
+                return parse_iso_datetime(created_at_str)
+        except Exception as e:
+            log_warn(f"Failed to discover baseline via GraphQL: {e}. Falling back to default.")
+
+    # 4. Default fallback
+    return parse_iso_datetime("2020-09-18T07:00:00Z")
+
+
+def format_loc_counts(additions: int, deletions: int) -> tuple[str, str]:
+    """Formats LOC integers with commas and directional symbols."""
+    return f"++{additions:,}", f"--{deletions:,}"
+
+
+def load_cache(cache_path: Path) -> dict:
+    """Safely loads cache JSON with default fallback on missing or corrupted file."""
+    if cache_path.is_file():
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            log_warn(f"Cache corrupt or unreadable: {e}. Starting fresh.")
+    return {
+        "baseline": {
+            "first_commit_date": "2020-09-18T07:00:00Z",
+            "account_created_at": "2020-06-12T11:30:35Z",
+            "source": "cache_fallback",
+        },
+        "repositories": {},
+        "totals": {
+            "additions": 320410,
+            "deletions": 85240,
+            "last_updated": "2026-11-07T14:00:00Z",
+        },
+    }
+
+
+def save_cache(cache_path: Path, data: dict) -> None:
+    """Writes formatted JSON cache with 2-space indentation."""
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def aggregate_loc(config: dict, cache: dict, token: str | None = None) -> tuple[int, int]:
+    """
+    Enumerates owned non-fork repositories and aggregates LOC (additions, deletions).
+    Implements incremental caching using pushedAt comparisons.
+    Queries commits in batches strictly <= 50 per page.
+    Filters out any repository listed in config.telemetry.exclude_repos.
+    """
+    exclude_repos = set(config.get("telemetry", {}).get("exclude_repos", []))
+
+    if token:
+        try:
+            repos_query = """
+            query GetUserRepositories($after: String) {
+              viewer {
+                repositories(
+                  first: 100
+                  ownerAffiliations: [OWNER]
+                  isFork: false
+                  after: $after
+                ) {
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                  nodes {
+                    name
+                    isArchived
+                    pushedAt
+                    defaultBranchRef {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+            """
+            after_cursor = None
+            all_repo_nodes = []
+            while True:
+                data = execute_graphql(repos_query, variables={"after": after_cursor}, token=token)
+                repos_data = data.get("data", {}).get("viewer", {}).get("repositories", {})
+                all_repo_nodes.extend(repos_data.get("nodes", []))
+                page_info = repos_data.get("pageInfo", {})
+                if page_info.get("hasNextPage"):
+                    after_cursor = page_info.get("endCursor")
+                else:
+                    break
+
+            for node in all_repo_nodes:
+                repo_name = node.get("name")
+                if not repo_name or repo_name in exclude_repos:
+                    continue
+
+                pushed_at = node.get("pushedAt")
+                cached = cache.setdefault("repositories", {}).get(repo_name)
+
+                # Incremental Cache Hit
+                if cached and cached.get("pushed_at") == pushed_at and "additions" in cached and "deletions" in cached:
+                    continue
+
+                # Cache Miss or Updated Repo: query commit history in batches of 50
+                default_branch = node.get("defaultBranchRef")
+                if not default_branch:
+                    cache["repositories"][repo_name] = {
+                        "pushed_at": pushed_at,
+                        "additions": 0,
+                        "deletions": 0,
+                    }
+                    continue
+
+                commits_query = """
+                query GetRepoCommits($name: String!, $after: String) {
+                  viewer {
+                    repository(name: $name) {
+                      defaultBranchRef {
+                        target {
+                          ... on Commit {
+                            history(first: 50, after: $after) {
+                              pageInfo {
+                                hasNextPage
+                                endCursor
+                              }
+                              nodes {
+                                additions
+                                deletions
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                """
+                commit_after = None
+                repo_adds = 0
+                repo_dels = 0
+                while True:
+                    c_res = execute_graphql(commits_query, variables={"name": repo_name, "after": commit_after}, token=token)
+                    repo_obj = c_res.get("data", {}).get("viewer", {}).get("repository")
+                    if not repo_obj or not repo_obj.get("defaultBranchRef"):
+                        break
+                    target = repo_obj["defaultBranchRef"].get("target", {})
+                    history = target.get("history", {})
+                    for c_node in history.get("nodes", []):
+                        repo_adds += c_node.get("additions", 0)
+                        repo_dels += c_node.get("deletions", 0)
+
+                    c_page = history.get("pageInfo", {})
+                    if c_page.get("hasNextPage"):
+                        commit_after = c_page.get("endCursor")
+                    else:
+                        break
+
+                cache["repositories"][repo_name] = {
+                    "pushed_at": pushed_at,
+                    "additions": repo_adds,
+                    "deletions": repo_dels,
+                }
+        except Exception as e:
+            log_warn(f"Failed to fetch repositories/commits via GraphQL: {e}. Using cached totals.")
+
+    # Aggregate active repositories excluding exclude_repos
+    active_repos = cache.get("repositories", {})
+    if active_repos:
+        total_adds = sum(
+            r.get("additions", 0)
+            for name, r in active_repos.items()
+            if name not in exclude_repos
+        )
+        total_dels = sum(
+            r.get("deletions", 0)
+            for name, r in active_repos.items()
+            if name not in exclude_repos
+        )
+    else:
+        total_adds = cache.get("totals", {}).get("additions", 320410)
+        total_dels = cache.get("totals", {}).get("deletions", 85240)
+
+    cache.setdefault("totals", {})["additions"] = total_adds
+    cache["totals"]["deletions"] = total_dels
+    cache["totals"]["last_updated"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    return total_adds, total_dels
+
+
+def write_svg_idempotent(output_path: Path, new_content: str) -> bool:
+    """
+    Validates XML and writes to output_path ONLY if content has changed.
+    Returns True if written, False if skipped due to byte-equality.
+    """
+    # Strict XML validation
+    ET.fromstring(new_content)
+
+    if output_path.exists():
+        existing = output_path.read_text(encoding="utf-8")
+        if existing == new_content:
+            log_info(f"{output_path.name} is already up to date (idempotent skip)")
+            return False
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(new_content, encoding="utf-8")
+    log_ok(f"Updated {output_path.name}")
+    return True
+
+
 def main() -> int:
     """CLI Entry point for profile update engine."""
     log_info("humam@workstation profile updater v1.0.0")
+
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    cache = load_cache(CACHE_PATH)
     token = get_github_token(ROOT_DIR)
+
     if not token:
         log_warn("No token found. Running offline with cached/mock telemetry")
-        return 0
 
-    log_ok("GitHub token resolved successfully")
+    baseline_dt = get_baseline_date(config, cache, token)
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    y, m, d = compute_calendar_diff(baseline_dt, now_utc)
+    uptime_str = format_uptime_neofetch(y, m, d)
+    log_info(f"Coding uptime: {uptime_str} (since {baseline_dt.strftime('%Y-%m-%d')})")
+
+    adds, dels = aggregate_loc(config, cache, token)
+    add_str, del_str = format_loc_counts(adds, dels)
+    log_info(f"Aggregate LOC: {add_str} / {del_str}")
+
+    save_cache(CACHE_PATH, cache)
+    log_ok("Updated telemetry cache")
     return 0
 
 
