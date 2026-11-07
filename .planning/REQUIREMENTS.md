@@ -12,8 +12,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **HERO-01**: Dual-theme SVG Hero card with stylized block monogram ASCII typography (`H-` / `HH`) on the left panel
 - [x] **HERO-02**: Terminal telemetry on the right panel (`humam@workstation`, OS: `Arch Linux`, Kernel: `Systems | AI & Robotics`, Focus: `Autonomous Systems & Backend`, Contact: email & LinkedIn)
 - [x] **HERO-03**: Dual theme support via `<picture>` and `(prefers-color-scheme: dark)` for seamless GitHub dark/light mode switching
-- [ ] **HERO-04**: Dynamic "Coding Uptime" calculation evaluating elapsed duration (`X yrs, Y mos, Z days`) from first GitHub commit to present
-- [ ] **HERO-05**: Dynamic aggregate Lines of Code (LOC) counter displaying total additions (`++`) and deletions (`--`) across repositories
+- [x] **HERO-04**: Dynamic "Coding Uptime" calculation evaluating elapsed duration (`X yrs, Y mos, Z days`) from first GitHub commit to present
+- [x] **HERO-05**: Dynamic aggregate Lines of Code (LOC) counter displaying total additions (`++`) and deletions (`--`) across repositories
 
 ### Open Source & Projects Showcase (PROJ)
 
@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Automation & Workflows (AUTO)
 
-- [ ] **AUTO-01**: Standalone Python update engine (`scripts/update_profile.py`) querying GitHub GraphQL API with rate-limit and error handling
+- [x] **AUTO-01**: Standalone Python update engine (`scripts/update_profile.py`) querying GitHub GraphQL API with rate-limit and error handling
 - [ ] **AUTO-02**: Scheduled GitHub Actions workflow (`.github/workflows/profile-updater.yml`) running on daily cron and manual trigger (`workflow_dispatch`)
 - [ ] **AUTO-03**: Automated git commit and push step within the workflow running under standard `GITHUB_TOKEN` permissions with zero hosting cost
 
@@ -67,9 +67,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | HERO-01 | Phase 1 | Complete |
 | HERO-02 | Phase 1 | Complete |
 | HERO-03 | Phase 1 | Complete |
-| HERO-04 | Phase 2 | Pending |
-| HERO-05 | Phase 2 | Pending |
-| AUTO-01 | Phase 2 | Pending |
+| HERO-04 | Phase 2 | Complete |
+| HERO-05 | Phase 2 | Complete |
+| AUTO-01 | Phase 2 | Complete |
 | PROJ-01 | Phase 3 | Pending |
 | PROJ-02 | Phase 3 | Pending |
 | PROJ-03 | Phase 3 | Pending |

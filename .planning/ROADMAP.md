@@ -12,7 +12,7 @@ Build a fully automated, self-updating GitHub Profile README for `humam-hossain`
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Hero Terminal Card & Design System** - Static dual-theme SVG hero with ASCII monogram and system telemetry (completed 2026-11-07)
-- [ ] **Phase 2: Python Engine & Dynamic Telemetry** - Build the update script with coding uptime and LOC calculations
+- [x] **Phase 2: Python Engine & Dynamic Telemetry** - Build the update script with coding uptime and LOC calculations (completed 2026-11-07)
 - [ ] **Phase 3: Open Source Projects Dashboard** - Live repo metrics table with configurable project selection
 - [ ] **Phase 4: Languages, Streaks & Metrics** - Top languages bar, streak stats, visitor counter, git activity stream
 - [ ] **Phase 5: Skills Matrix & Blog Section** - Terminal-themed skills grid and plug-and-play blog/RSS slot
@@ -84,7 +84,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03: Implement SVG patching logic to inject dynamic values into `dark_mode.svg` and `light_mode.svg`
+- [x] 02-03: Implement SVG patching logic to inject dynamic values into `dark_mode.svg` and `light_mode.svg`
 
 ### Phase 3: Open Source Projects Dashboard
 
@@ -176,7 +176,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Hero Terminal Card & Design System | 3/3 | Complete    | 2026-11-07 |
-| 2. Python Engine & Dynamic Telemetry | 3/3 | In Progress|  |
+| 2. Python Engine & Dynamic Telemetry | 3/3 | Complete    | 2026-11-07 |
 | 3. Open Source Projects Dashboard | 0/3 | Not started | - |
 | 4. Languages, Streaks & Metrics | 0/4 | Not started | - |
 | 5. Skills Matrix & Blog Section | 0/2 | Not started | - |
