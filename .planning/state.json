@@ -1,0 +1,43 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Hero Terminal Card & Design System",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Python Engine & Dynamic Telemetry",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Open Source Projects Dashboard",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Languages, Streaks & Metrics",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Skills Matrix & Blog Section",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "GitHub Actions Automation",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 2 of 6 · 17% · executing"
+  },
+  "updated_at": "2026-11-07T14:13:28.172Z"
+}

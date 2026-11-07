@@ -69,9 +69,13 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-
+**Wave 1**
 - [ ] 02-01: Scaffold `scripts/update_profile.py` with GitHub GraphQL API client, authentication, and rate-limit handling
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 02-02: Implement coding uptime calculation (first commit date → now) and LOC aggregation across all repos
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 02-03: Implement SVG patching logic to inject dynamic values into `dark_mode.svg` and `light_mode.svg`
 
 ### Phase 3: Open Source Projects Dashboard
