@@ -20,6 +20,14 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+try:
+    from scripts.generate_hero import generate_svg
+except (ImportError, ModuleNotFoundError):
+    from generate_hero import generate_svg
+
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
 HERO_SVG_PATH = ROOT_DIR / "assets" / "hero.svg"
@@ -532,8 +540,11 @@ def main() -> int:
     add_str, del_str = format_loc_counts(adds, dels)
     log_info(f"Aggregate LOC: {add_str} / {del_str}")
 
+    svg_content = generate_svg(uptime=uptime_str, loc_add=add_str, loc_del=del_str)
+    write_svg_idempotent(HERO_SVG_PATH, svg_content)
+
     save_cache(CACHE_PATH, cache)
-    log_ok("Updated telemetry cache")
+    log_ok("Profile telemetry refresh complete.")
     return 0
 
 
