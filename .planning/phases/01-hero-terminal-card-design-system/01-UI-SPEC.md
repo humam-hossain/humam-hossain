@@ -1,7 +1,8 @@
 ---
 phase: "1"
 slug: "hero-terminal-card-design-system"
-status: draft
+status: approved
+reviewed_at: "2026-11-07"
 shadcn_initialized: false
 preset: none
 created: "2026-11-07"
@@ -40,6 +41,16 @@ outside the table is the expected path, not an exception.
 | ContactBadgeRow | `README.md` | Shields.io flat-square terminal badges for Email, LinkedIn, Portfolio, and Resume |
 | TerminalExitPrompt | `README.md` | Monospace CLI exit prompt sign-off (`humam@workstation:~$ exit`) |
 | PhaseExpansionAnchors | `README.md` | HTML comment delimiters for downstream phase automation (`PROJECTS`, `METRICS`, `SKILLS`) |
+
+### Visual Scan Hierarchy & Anchor (Dimension 2)
+- **Primary Visual Anchor:** Retro block-art `H_` monogram in Cyan (`#a5d6ff`) on the standalone left panel (~35% card width), anchored beneath by the 8-dot ANSI diagnostic strip (`<circle r="6">`).
+- **Visual Scan Order:**
+  1. `H_` Monogram & Cursor Anchor (`.mono-art`, 20px Cyan `#a5d6ff`)
+  2. Telemetry Prompt Header (`humam@workstation:~`, 16px Blue `#58a6ff` + dashed divider `#616e7f`)
+  3. Structured Metadata Key-Value Rows (14px Amber `#ffa657` keys + Muted White `#c9d1d9` values)
+  4. GitHub Activity Metrics (Green `++` additions `#3fb950` / Red `--` deletions `#f85149`)
+  5. Shields.io Terminal Contact Badges (`Email`, `LinkedIn`, `Portfolio`, `Resume`)
+  6. Terminal Exit Sign-Off (`humam@workstation:~$ exit`)
 
 ---
 
@@ -157,12 +168,12 @@ Applicable state considerations resolved: 6 covered, 0 backstop, 0 unresolved
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-07
