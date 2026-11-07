@@ -66,16 +66,24 @@ Plans:
   3. The script handles GitHub API rate limits gracefully and uses `GITHUB_TOKEN` or fine-grained PAT authentication
   4. SVGs remain valid XML after patching and render correctly on the profile
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 Plans:
+
+- [x] 02-01-PLAN.md
+- [ ] 02-02-PLAN.md
+- [ ] 02-03-PLAN.md
+
 **Wave 1**
-- [ ] 02-01: Scaffold `scripts/update_profile.py` with GitHub GraphQL API client, authentication, and rate-limit handling
+
+- [x] 02-01: Scaffold `scripts/update_profile.py` with GitHub GraphQL API client, authentication, and rate-limit handling
 
 **Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02: Implement coding uptime calculation (first commit date → now) and LOC aggregation across all repos
 
 **Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 02-03: Implement SVG patching logic to inject dynamic values into `dark_mode.svg` and `light_mode.svg`
 
 ### Phase 3: Open Source Projects Dashboard
@@ -168,7 +176,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Hero Terminal Card & Design System | 3/3 | Complete    | 2026-11-07 |
-| 2. Python Engine & Dynamic Telemetry | 0/3 | Not started | - |
+| 2. Python Engine & Dynamic Telemetry | 1/3 | In Progress|  |
 | 3. Open Source Projects Dashboard | 0/3 | Not started | - |
 | 4. Languages, Streaks & Metrics | 0/4 | Not started | - |
 | 5. Skills Matrix & Blog Section | 0/2 | Not started | - |
