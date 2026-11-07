@@ -10,10 +10,12 @@ import os
 from pathlib import Path
 import sys
 import urllib.error
+import xml.etree.ElementTree as ET
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from scripts.generate_hero import generate_svg
 from scripts.update_profile import (
     _add_calendar_months,
     compute_calendar_diff,
@@ -397,3 +399,68 @@ def test_offline_fallback_mode(capsys, monkeypatch, tmp_path):
     captured = capsys.readouterr()
     assert "[WARN]" in captured.out or "[WARN]" in captured.err
     assert "No token found" in (captured.out + captured.err)
+
+
+def test_svg_parameterization_and_dom_hooks():
+    """
+    Verifies that generate_svg injects custom telemetry while preserving
+    exact DOM hook IDs (val-uptime, val-loc-add, val-loc-del) and XML validity.
+    """
+    custom_uptime = "6 yrs, 1 mo, 20 days"
+    custom_add = "++500,000"
+    custom_del = "--100,000"
+
+    svg = generate_svg(uptime=custom_uptime, loc_add=custom_add, loc_del=custom_del)
+    root = ET.fromstring(svg)
+
+    uptime_el = root.find(".//*[@id='val-uptime']")
+    assert uptime_el is not None
+    assert uptime_el.text == custom_uptime
+
+    add_el = root.find(".//*[@id='val-loc-add']")
+    assert add_el is not None
+    assert add_el.text == custom_add
+
+    del_el = root.find(".//*[@id='val-loc-del']")
+    assert del_el is not None
+    assert del_el.text == custom_del
+
+
+def test_idempotent_write(tmp_path):
+    """
+    Verifies idempotent file writing:
+    - First write writes file and returns True.
+    - Second write with byte-identical content skips writing and returns False.
+    """
+    target = tmp_path / "hero.svg"
+    svg1 = generate_svg()
+
+    # First write -> True
+    assert write_svg_idempotent(target, svg1) is True
+    assert target.exists()
+
+    # Second write with identical content -> False (idempotent skip)
+    assert write_svg_idempotent(target, svg1) is False
+
+
+def test_full_pipeline_offline_execution(tmp_path, monkeypatch):
+    """
+    Verifies executing update_profile.main() end-to-end in offline mode
+    creates/updates hero.svg without raising unhandled exceptions and exits 0.
+    """
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+
+    test_hero_svg = tmp_path / "hero.svg"
+    with patch("scripts.update_profile.HERO_SVG_PATH", test_hero_svg):
+        exit_code = main()
+        assert exit_code == 0
+        assert test_hero_svg.exists()
+
+        # Check that generated file has valid XML and contains DOM hooks
+        content = test_hero_svg.read_text(encoding="utf-8")
+        root = ET.fromstring(content)
+        assert root.find(".//*[@id='val-uptime']") is not None
+        assert root.find(".//*[@id='val-loc-add']") is not None
+        assert root.find(".//*[@id='val-loc-del']") is not None
+

@@ -5,6 +5,8 @@ Generates assets/hero.svg using tokens defined in config/terminal_theme.json.
 Standard library only (zero external dependencies).
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
 import xml.sax.saxutils as saxutils
@@ -13,6 +15,11 @@ import xml.etree.ElementTree as ET
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 OUTPUT_PATH = ROOT_DIR / "assets" / "hero.svg"
+
+# Default baseline fallback values (Phase 1 tokens)
+DEFAULT_UPTIME = "4 yrs, 3 mos, 12 days"
+DEFAULT_LOC_ADD = "++320,410"
+DEFAULT_LOC_DEL = "--85,240"
 
 # ASCII Monogram lines using solid and half-blocks
 MONOGRAM_LINES = [
@@ -38,7 +45,19 @@ TELEMETRY_ITEMS = [
 ]
 
 
-def generate_svg() -> str:
+def generate_svg(
+    uptime: str | None = None,
+    loc_add: str | None = None,
+    loc_del: str | None = None,
+) -> str:
+    """
+    Generates assets/hero.svg vector graphic content.
+    If telemetry parameters are None, falls back to default workstation baseline tokens.
+    """
+    uptime_val = uptime if uptime is not None else DEFAULT_UPTIME
+    loc_add_val = loc_add if loc_add is not None else DEFAULT_LOC_ADD
+    loc_del_val = loc_del if loc_del is not None else DEFAULT_LOC_DEL
+
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         theme = json.load(f)
 
@@ -103,16 +122,19 @@ def generate_svg() -> str:
 
     for key, val in TELEMETRY_ITEMS:
         padded_key = f"{key:<10}"
-        escaped_val = saxutils.escape(val)
         if "Uptime" in key:
+            escaped_val = saxutils.escape(str(uptime_val))
             lines.append(f'    <text x="{tm["x"]}" y="{cur_y}" class="mono"><tspan class="key" xml:space="preserve">{padded_key} </tspan><tspan id="val-uptime" class="val">{escaped_val}</tspan></text>')
         else:
+            escaped_val = saxutils.escape(str(val))
             lines.append(f'    <text x="{tm["x"]}" y="{cur_y}" class="mono"><tspan class="key" xml:space="preserve">{padded_key} </tspan><tspan class="val">{escaped_val}</tspan></text>')
         cur_y += tm["line_height"]
 
-    # LOC Counter with Phase 2 DOM Hooks
+    # Parameterized LOC Counter with Phase 2 DOM Hooks
     loc_key = f'{"LOC:":<10}'
-    lines.append(f'    <text x="{tm["x"]}" y="{cur_y}" class="mono"><tspan class="key" xml:space="preserve">{loc_key} </tspan><tspan id="val-loc-add" class="loc-add">++320,410</tspan><tspan class="val"> / </tspan><tspan id="val-loc-del" class="loc-del">--85,240</tspan></text>')
+    esc_add = saxutils.escape(str(loc_add_val))
+    esc_del = saxutils.escape(str(loc_del_val))
+    lines.append(f'    <text x="{tm["x"]}" y="{cur_y}" class="mono"><tspan class="key" xml:space="preserve">{loc_key} </tspan><tspan id="val-loc-add" class="loc-add">{esc_add}</tspan><tspan class="val"> / </tspan><tspan id="val-loc-del" class="loc-del">{esc_del}</tspan></text>')
 
     # Window Outer Border
     lines.append(f'    <rect width="{g["width"]}" height="{g["height"]}" rx="{g["card_rx"]}" ry="{g["card_rx"]}" fill="none" stroke="{c["border"]}" stroke-width="1" />')
