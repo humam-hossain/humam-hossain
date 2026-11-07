@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-06)
+See: .planning/PROJECT.md (updated 2026-11-07)
 
 **Core value:** Every profile component must strictly adhere to the unified terminal design language while keeping all live metrics automatically refreshed via free GitHub Actions.
-**Current focus:** Phase 01 — Hero Terminal Card & Design System
+**Current focus:** Phase 02 — Python Engine & Dynamic Telemetry
 
 ## Current Position
 
@@ -66,6 +66,9 @@ Recent decisions affecting current work:
 - [Init]: Vertical MVP structure — each phase delivers a visible profile feature
 - [Init]: First-commit coding uptime over biological age
 - [Init]: Exclude GitHub Trophies
+- [Phase 01]: Centralized design tokens in config/terminal_theme.json as single source of truth
+- [Phase 01]: Standard library only for scripts/generate_hero.py with ElementTree validation
+- [Phase 01]: Reserved DOM update hooks val-uptime, val-loc-add, val-loc-del for Phase 2 dynamic patching
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-07T03:10:05.690Z
-Stopped at: Phase 01 complete, ready to plan Phase 2
-Resume file: .planning/phases/01-hero-terminal-card-design-system/01-UI-SPEC.md
+Last session: 2026-11-07
+Stopped at: Phase 01 complete, ready to plan Phase 02
+Resume file: None

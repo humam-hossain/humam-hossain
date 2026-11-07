@@ -14,10 +14,10 @@ Every single profile component must strictly adhere to the same unified terminal
 
 - ✓ Modular LaTeX CV generation pipeline with automated compilation scripts — existing (`cv/`)
 - ✓ Next.js static portfolio foundation and component assets — existing (`src/`, `public/`)
+- ✓ SVG terminal Hero Card with `H_` stylized ASCII monogram, 8-dot ANSI strip, `humam@workstation` telemetry, and Shields.io terminal contact badges — Phase 1
 
 ### Active
 
-- [ ] Dual-theme SVG terminal Hero Card with `H-` / `HH` stylized ASCII monogram on the left and `humam@workstation` telemetry on the right
 - [ ] Automated "Coding Uptime" calculation derived from timestamp of first GitHub commit to present
 - [ ] Dynamic Lines of Code (LOC) counter tracking aggregate repository additions (`++`) and deletions (`--`)
 - [ ] Live Open Source Projects Dashboard displaying real-time Stars, Forks, Issues, and PR counts in a terminal box format
@@ -53,7 +53,8 @@ Every single profile component must strictly adhere to the same unified terminal
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Strict Terminal Design System | Prevents disjointed appearance typical of profiles mixing random third-party cards; enforces cohesive professional identity | — Pending |
+| Strict Terminal Design System | Prevents disjointed appearance typical of profiles mixing random third-party cards; enforces cohesive professional identity | ✓ Shipped in Phase 1 (config/terminal_theme.json, docs/DESIGN_SYSTEM.md) |
+| Deterministic Standard Library Generator | Pure Python stdlib (xml.sax, xml.etree) guarantees zero external dependencies and fast GitHub Actions runtime | ✓ Shipped in Phase 1 (scripts/generate_hero.py) |
 | First-Commit Coding Uptime | Personalizes uptime telemetry to reflect real GitHub engineering history rather than arbitrary biological age | — Pending |
 | Dual SVG + GitHub Actions Architecture | Ensures fast profile load times without client-side lag or rate limits, while maintaining automated daily freshness | — Pending |
 | Pinned + Dynamic Project Metrics | Allows highlighting key competition/portfolio repos while keeping live star, fork, issue, and PR stats accurate | — Pending |
@@ -77,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-06 after initialization*
+*Last updated: 2026-11-07 after Phase 1*
