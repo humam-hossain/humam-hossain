@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 380" width="100%" height="100%">
+<defs>
+  <style>
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Fira Code", monospace;
+      text-rendering: geometricPrecision;
+    }
+    .title { font-size: 13px; fill: #8b949e; text-anchor: middle; }
+    .mono-art { font-size: 20px; fill: #a5d6ff; white-space: pre; font-weight: bold; }
+    .prompt { font-size: 15px; fill: #58a6ff; font-weight: bold; }
+    .divider { font-size: 14px; fill: #616e7f; }
+    .key { font-size: 13.5px; fill: #ffa657; font-weight: 600; }
+    .val { font-size: 13.5px; fill: #c9d1d9; }
+    .loc-add { font-size: 13.5px; fill: #3fb950; font-weight: 600; }
+    .loc-del { font-size: 13.5px; fill: #f85149; font-weight: 600; }
+  </style>
+  <clipPath id="card-clip"><rect width="850" height="380" rx="10" ry="10" /></clipPath>
+</defs>
+  <g clip-path="url(#card-clip)">
+    <rect width="850" height="380" fill="#0d1117" />
+    <rect width="850" height="38" fill="#161b22" />
+    <line x1="0" y1="38" x2="850" y2="38" stroke="#30363d" stroke-width="1" />
+    <circle cx="25" cy="19" r="6" fill="#ff5f56" />
+    <circle cx="45" cy="19" r="6" fill="#ffbd2e" />
+    <circle cx="65" cy="19" r="6" fill="#27c93f" />
+    <text x="425" y="24" class="mono title">humam@workstation:~</text>
+    <text x="60" y="82" class="mono mono-art" xml:space="preserve">▄▄     ▄▄</text>
+    <text x="60" y="104" class="mono mono-art" xml:space="preserve">██     ██</text>
+    <text x="60" y="126" class="mono mono-art" xml:space="preserve">██     ██</text>
+    <text x="60" y="148" class="mono mono-art" xml:space="preserve">█████████</text>
+    <text x="60" y="170" class="mono mono-art" xml:space="preserve">█████████</text>
+    <text x="60" y="192" class="mono mono-art" xml:space="preserve">██     ██</text>
+    <text x="60" y="214" class="mono mono-art" xml:space="preserve">██     ██</text>
+    <text x="60" y="236" class="mono mono-art" xml:space="preserve">▀▀     ▀▀  _</text>
+    <circle cx="62" cy="295" r="6" fill="#484f58" />
+    <circle cx="84" cy="295" r="6" fill="#ff7b72" />
+    <circle cx="106" cy="295" r="6" fill="#3fb950" />
+    <circle cx="128" cy="295" r="6" fill="#d29922" />
+    <circle cx="150" cy="295" r="6" fill="#58a6ff" />
+    <circle cx="172" cy="295" r="6" fill="#bc8cff" />
+    <circle cx="194" cy="295" r="6" fill="#79c0ff" />
+    <circle cx="216" cy="295" r="6" fill="#f0f6fc" />
+    <text x="310" y="82" class="mono prompt">humam@workstation:~</text>
+    <text x="310" y="105" class="mono divider">-------------------</text>
+    <text x="310" y="130" class="mono"><tspan class="key" xml:space="preserve">OS:        </tspan><tspan class="val">Arch Linux x86_64</tspan></text>
+    <text x="310" y="155" class="mono"><tspan class="key" xml:space="preserve">Host:      </tspan><tspan class="val">Workstation</tspan></text>
+    <text x="310" y="180" class="mono"><tspan class="key" xml:space="preserve">Kernel:    </tspan><tspan class="val">AI &amp; Robotics</tspan></text>
+    <text x="310" y="205" class="mono"><tspan class="key" xml:space="preserve">Focus:     </tspan><tspan class="val">Autonomous Systems, IoT &amp; Cloud</tspan></text>
+    <text x="310" y="230" class="mono"><tspan class="key" xml:space="preserve">Uptime:    </tspan><tspan id="val-uptime" class="val">4 yrs, 3 mos, 12 days</tspan></text>
+    <text x="310" y="255" class="mono"><tspan class="key" xml:space="preserve">Shell:     </tspan><tspan class="val">zsh 5.9</tspan></text>
+    <text x="310" y="280" class="mono"><tspan class="key" xml:space="preserve">Contact:   </tspan><tspan class="val">humam@... / in/humam-hossain</tspan></text>
+    <text x="310" y="305" class="mono"><tspan class="key" xml:space="preserve">LOC:       </tspan><tspan id="val-loc-add" class="loc-add">++320,410</tspan><tspan class="val"> / </tspan><tspan id="val-loc-del" class="loc-del">--85,240</tspan></text>
+    <rect width="850" height="380" rx="10" ry="10" fill="none" stroke="#30363d" stroke-width="1" />
+  </g>
+</svg>
