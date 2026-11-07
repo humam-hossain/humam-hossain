@@ -1,7 +1,8 @@
 ---
 phase: 3
 slug: open-source-projects-dashboard
-status: draft
+status: approved
+reviewed_at: 2026-11-07
 shadcn_initialized: false
 preset: none
 created: 2026-11-07
@@ -156,6 +157,29 @@ Semantic Metric Color Indicators (secondary telemetry accents):
 
 ---
 
+## UI Considerations
+
+> Populated by the ui-phase UI-consideration probe (Step 9.5) and lifted by plan-phase's
+> `## UI Considerations` lift rule via the identical rule as SPEC `## Edge Coverage`. Shape-rooted UI *state*
+> coverage (empty / loading / error / populated / partial / overflow / zero-one-many / long-text).
+> Empty-state and error-state COPY live in `## Copywriting Contract` above — this section covers
+> state coverage and REFERENCES those rows rather than restating the copy (de-dup).
+
+Applicable state considerations resolved: 8 covered, 0 backstop, 0 unresolved
+
+| Category | Element(s) | Status | Resolution / Reason |
+|----------|------------|--------|---------------------|
+| empty | Curated projects list (`config/projects.json`) | ✅ covered | When `config/projects.json` is missing or contains 0 repositories, the dashboard renders the empty-state sub-panel defined in Copywriting Contract above. |
+| loading | SVG rendering and font assets | ✅ covered | Pre-rendered static SVG during CI/local update run; GitHub serves via Camo proxy with zero client-side async fetch spinner or latency. System monospace font stack ensures instant layout. |
+| error | GraphQL API failure or missing token | ✅ covered | `scripts/update_profile.py` intercepts network errors and falls back to cached snapshot in `data/cache.json` with warning log per Copywriting Contract. |
+| populated | 2x2 grid featured projects showcase | ✅ covered | Normal state displays 4 curated repositories with Cyan titles (`#a5d6ff`), language dot indicator, 2-line clamped description (`#8b949e`), and ANSI metric counter row. |
+| partial | Fewer than 4 repositories declared or missing description | ✅ covered | If fewer than 4 repositories are pinned, empty slots render clean placeholder dashed borders or collapse; missing descriptions fallback to GitHub topics or default summary per CONTEXT.md D-14. |
+| overflow | Descriptions and mobile viewport scaling | ✅ covered | Repository descriptions are clamped strictly to 2 lines (~80–85 characters) with ellipsis truncation per CONTEXT.md D-13; SVG uses responsive `viewBox="0 0 850 340"` with `width="100%"` in README to prevent horizontal scrollbars on mobile. |
+| zero-one-many | Real-time metric counters | ✅ covered | Metric counters format raw integer values cleanly (`★ 14`, `⌥ 2`, `⊙ 0`); zero counts are rendered in muted gray (`#616e7f`) per CONTEXT.md D-12 to preserve layout stability without visual noise. |
+| long-text | Repository titles and XML entity escaping | ✅ covered | Long repository names truncated or scaled to fit 380px sub-panel width; all string interpolations are XML-escaped via `xml.sax.saxutils.escape()`. |
+
+---
+
 ## Registry Safety
 
 | Registry | Blocks Used | Safety Gate |
@@ -167,11 +191,11 @@ Semantic Metric Color Indicators (secondary telemetry accents):
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-07
