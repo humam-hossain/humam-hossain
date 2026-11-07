@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "name": "GitHub Dark Terminal Theme",
+    "version": "1.0.0",
+    "author": "humam-hossain"
+  },
+  "geometry": {
+    "viewBox": "0 0 850 380",
+    "width": 850,
+    "height": 380,
+    "card_rx": 10,
+    "header_height": 38,
+    "traffic_lights": [
+      {
+        "cx": 25,
+        "cy": 19,
+        "r": 6,
+        "color": "#ff5f56"
+      },
+      {
+        "cx": 45,
+        "cy": 19,
+        "r": 6,
+        "color": "#ffbd2e"
+      },
+      {
+        "cx": 65,
+        "cy": 19,
+        "r": 6,
+        "color": "#27c93f"
+      }
+    ],
+    "monogram": {
+      "x": 60,
+      "y_start": 82,
+      "line_height": 22
+    },
+    "ansi_strip": {
+      "cy": 295,
+      "r": 6,
+      "x_start": 62,
+      "spacing": 22
+    },
+    "telemetry": {
+      "x": 310,
+      "y_start": 82,
+      "line_height": 25
+    }
+  },
+  "colors": {
+    "background": {
+      "header": "#161b22",
+      "body": "#0d1117"
+    },
+    "border": "#30363d",
+    "text": {
+      "title": "#8b949e",
+      "monogram": "#a5d6ff",
+      "cursor": "#a5d6ff",
+      "prompt": "#58a6ff",
+      "divider": "#616e7f",
+      "key": "#ffa657",
+      "value": "#c9d1d9",
+      "additions": "#3fb950",
+      "deletions": "#f85149"
+    },
+    "ansi": [
+      "#484f58",
+      "#ff7b72",
+      "#3fb950",
+      "#d29922",
+      "#58a6ff",
+      "#bc8cff",
+      "#79c0ff",
+      "#f0f6fc"
+    ]
+  },
+  "typography": {
+    "font_family": "ui-monospace, SFMono-Regular, Menlo, Consolas, \"Fira Code\", monospace",
+    "font_sizes": {
+      "title": 13,
+      "monogram": 20,
+      "prompt": 15,
+      "divider": 14,
+      "telemetry": 13.5
+    }
+  }
+}
