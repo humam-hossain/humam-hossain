@@ -1,0 +1,35 @@
+{
+  "data": {
+    "repository": {
+      "defaultBranchRef": {
+        "target": {
+          "history": {
+            "totalCount": 2,
+            "pageInfo": {
+              "hasNextPage": false,
+              "endCursor": null
+            },
+            "nodes": [
+              {
+                "additions": 3202,
+                "deletions": 421,
+                "author": {
+                  "name": "Muhammed Humam Hossain",
+                  "email": "humam@example.com"
+                }
+              },
+              {
+                "additions": 1500,
+                "deletions": 200,
+                "author": {
+                  "name": "Muhammed Humam Hossain",
+                  "email": "humam@example.com"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
