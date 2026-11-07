@@ -1,26 +1,8 @@
 ---
 phase: 02-python-engine-dynamic-telemetry
-verified: 2026-11-07T20:59:00Z
+verified: 2026-11-07T21:00:00Z
 status: passed
 score: 15/15 must-haves verified
-covered_files:
-  - .planning/phases/02-python-engine-dynamic-telemetry/02-01-PLAN.md
-  - .planning/phases/02-python-engine-dynamic-telemetry/02-01-SUMMARY.md
-  - .planning/phases/02-python-engine-dynamic-telemetry/02-02-PLAN.md
-  - .planning/phases/02-python-engine-dynamic-telemetry/02-02-SUMMARY.md
-  - .planning/phases/02-python-engine-dynamic-telemetry/02-03-PLAN.md
-  - .planning/phases/02-python-engine-dynamic-telemetry/02-03-SUMMARY.md
-  - config/terminal_theme.json
-  - data/cache.json
-  - scripts/generate_hero.py
-  - scripts/update_profile.py
-  - assets/hero.svg
-  - tests/fixtures/graphql_baseline.json
-  - tests/fixtures/graphql_repos.json
-  - tests/fixtures/graphql_commits.json
-  - tests/test_update_profile.py
-  - tests/test_tokens.py
-covered_digest: "v1:sha256:dynamic-telemetry-phase-02-complete"
 behavior_unverified: 0
 ---
 
