@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Hero & Identity (HERO)
 
-- [ ] **HERO-01**: Dual-theme SVG Hero card with stylized block monogram ASCII typography (`H-` / `HH`) on the left panel
-- [ ] **HERO-02**: Terminal telemetry on the right panel (`humam@workstation`, OS: `Arch Linux`, Kernel: `Systems | AI & Robotics`, Focus: `Autonomous Systems & Backend`, Contact: email & LinkedIn)
-- [ ] **HERO-03**: Dual theme support via `<picture>` and `(prefers-color-scheme: dark)` for seamless GitHub dark/light mode switching
+- [x] **HERO-01**: Dual-theme SVG Hero card with stylized block monogram ASCII typography (`H-` / `HH`) on the left panel
+- [x] **HERO-02**: Terminal telemetry on the right panel (`humam@workstation`, OS: `Arch Linux`, Kernel: `Systems | AI & Robotics`, Focus: `Autonomous Systems & Backend`, Contact: email & LinkedIn)
+- [x] **HERO-03**: Dual theme support via `<picture>` and `(prefers-color-scheme: dark)` for seamless GitHub dark/light mode switching
 - [ ] **HERO-04**: Dynamic "Coding Uptime" calculation evaluating elapsed duration (`X yrs, Y mos, Z days`) from first GitHub commit to present
 - [ ] **HERO-05**: Dynamic aggregate Lines of Code (LOC) counter displaying total additions (`++`) and deletions (`--`) across repositories
 
@@ -64,9 +64,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HERO-01 | Phase 1 | Pending |
-| HERO-02 | Phase 1 | Pending |
-| HERO-03 | Phase 1 | Pending |
+| HERO-01 | Phase 1 | Complete |
+| HERO-02 | Phase 1 | Complete |
+| HERO-03 | Phase 1 | Complete |
 | HERO-04 | Phase 2 | Pending |
 | HERO-05 | Phase 2 | Pending |
 | AUTO-01 | Phase 2 | Pending |
@@ -83,6 +83,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | AUTO-03 | Phase 6 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 17 total
 - Mapped to phases: 17
 - Unmapped: 0
