@@ -23,10 +23,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Metrics, Languages & Activity (METRIC)
 
-- [ ] **METRIC-01**: Top Languages breakdown calculated from public repositories and rendered as a terminal horizontal progress bar
-- [ ] **METRIC-02**: Commit Streak & Contribution Stats card customized strictly to match terminal palette (`#161b22`, amber `#ffa657`, green `#3fb950`)
-- [ ] **METRIC-03**: Retro terminal session hits / visitor counter badge
-- [ ] **METRIC-04**: Recent Git activity stream displaying recent commits and merged PRs formatted as `git log --graph --oneline`
+- [x] **METRIC-01**: Top Languages breakdown calculated from public repositories and rendered as a terminal horizontal progress bar
+- [x] **METRIC-02**: Commit Streak & Contribution Stats card customized strictly to match terminal palette (`#161b22`, amber `#ffa657`, green `#3fb950`)
+- [x] **METRIC-03**: Retro terminal session hits / visitor counter badge
+- [x] **METRIC-04**: Recent Git activity stream displaying recent commits and merged PRs formatted as `git log --graph --oneline`
 
 ### Automation & Workflows (AUTO)
 
@@ -73,10 +73,10 @@ Which phases cover which requirements. Populated during roadmap creation.
 | PROJ-01 | Phase 3 | Complete |
 | PROJ-02 | Phase 3 | Complete |
 | PROJ-03 | Phase 3 | Complete |
-| METRIC-01 | Phase 4 | Pending |
-| METRIC-02 | Phase 4 | Pending |
-| METRIC-03 | Phase 4 | Pending |
-| METRIC-04 | Phase 4 | Pending |
+| METRIC-01 | Phase 4 | Complete |
+| METRIC-02 | Phase 4 | Complete |
+| METRIC-03 | Phase 4 | Complete |
+| METRIC-04 | Phase 4 | Complete |
 | CONTENT-01 | Phase 5 | Pending |
 | CONTENT-02 | Phase 5 | Pending |
 | AUTO-02 | Phase 6 | Pending |

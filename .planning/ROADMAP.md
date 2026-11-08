@@ -14,7 +14,7 @@ Build a fully automated, self-updating GitHub Profile README for `humam-hossain`
 - [x] **Phase 1: Hero Terminal Card & Design System** - Static dual-theme SVG hero with ASCII monogram and system telemetry (completed 2026-11-07)
 - [x] **Phase 2: Python Engine & Dynamic Telemetry** - Build the update script with coding uptime and LOC calculations (completed 2026-11-07)
 - [x] **Phase 3: Open Source Projects Dashboard** - Live repo metrics table with configurable project selection (completed 2026-11-08)
-- [ ] **Phase 4: Languages, Streaks & Metrics** - Top languages bar, streak stats, visitor counter, git activity stream
+- [x] **Phase 4: Languages, Streaks & Metrics** - Top languages bar, streak stats, visitor counter, git activity stream (completed 2026-11-08)
 - [ ] **Phase 5: Skills Matrix & Blog Section** - Terminal-themed skills grid and plug-and-play blog/RSS slot
 - [ ] **Phase 6: GitHub Actions Automation** - Daily scheduled workflow tying everything together
 
@@ -137,19 +137,19 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 04-01: Implement top languages calculation and terminal progress bar rendering
+- [x] 04-01: Implement top languages calculation and terminal progress bar rendering
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02: Integrate or generate terminal-themed commit streak stats card
+- [x] 04-02: Integrate or generate terminal-themed commit streak stats card
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-03: Add retro terminal visitor counter badge
+- [x] 04-03: Add retro terminal visitor counter badge
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 04-04: Implement recent git activity stream (`git log` style) via GitHub API
+- [x] 04-04: Implement recent git activity stream (`git log` style) via GitHub API
 
 ### Phase 5: Skills Matrix & Blog Section
 
@@ -200,6 +200,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Hero Terminal Card & Design System | 3/3 | Complete    | 2026-11-07 |
 | 2. Python Engine & Dynamic Telemetry | 3/3 | Complete    | 2026-11-07 |
 | 3. Open Source Projects Dashboard | 3/3 | Complete    | 2026-11-08 |
-| 4. Languages, Streaks & Metrics | 0/4 | Not started | - |
+| 4. Languages, Streaks & Metrics | 4/4 | Complete    | 2026-11-08 |
 | 5. Skills Matrix & Blog Section | 0/2 | Not started | - |
 | 6. GitHub Actions Automation | 0/2 | Not started | - |
