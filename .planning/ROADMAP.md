@@ -15,7 +15,7 @@ Build a fully automated, self-updating GitHub Profile README for `humam-hossain`
 - [x] **Phase 2: Python Engine & Dynamic Telemetry** - Build the update script with coding uptime and LOC calculations (completed 2026-11-07)
 - [x] **Phase 3: Open Source Projects Dashboard** - Live repo metrics table with configurable project selection (completed 2026-11-08)
 - [x] **Phase 4: Languages, Streaks & Metrics** - Top languages bar, streak stats, visitor counter, git activity stream (completed 2026-11-08)
-- [ ] **Phase 5: Skills Matrix & Blog Section** - Terminal-themed skills grid and plug-and-play blog/RSS slot
+- [x] **Phase 5: Skills Matrix & Blog Section** - Terminal-themed skills grid and plug-and-play blog/RSS slot (completed 2026-11-09)
 - [ ] **Phase 6: GitHub Actions Automation** - Daily scheduled workflow tying everything together
 
 ## Phase Details
@@ -176,7 +176,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02: Build plug-and-play blog/RSS section with dual-format parser, 12h cache, multi-layer fallbacks, and README cat ~/articles.log log box
+- [x] 05-02: Build plug-and-play blog/RSS section with dual-format parser, 12h cache, multi-layer fallbacks, and README cat ~/articles.log log box
 
 ### Phase 6: GitHub Actions Automation
 
@@ -209,5 +209,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Python Engine & Dynamic Telemetry | 3/3 | Complete    | 2026-11-07 |
 | 3. Open Source Projects Dashboard | 3/3 | Complete    | 2026-11-08 |
 | 4. Languages, Streaks & Metrics | 4/4 | Complete    | 2026-11-08 |
-| 5. Skills Matrix & Blog Section | 2/2 | In Progress|  |
+| 5. Skills Matrix & Blog Section | 2/2 | Complete    | 2026-11-09 |
 | 6. GitHub Actions Automation | 0/2 | Not started | - |
