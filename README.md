@@ -12,6 +12,13 @@
 </div>
 
 <!-- PROJECTS:START -->
+<div align="center">
+  <img src="./assets/projects.svg" alt="Open Source Projects Dashboard" width="100%" />
+</div>
+
+<div align="center">
+  <code>humam@workstation:~/projects$ cd <a href="https://github.com/humam-hossain/linux_shell_scripting">linux_shell_scripting</a> | cd <a href="https://github.com/humam-hossain/Python">Python</a> | cd <a href="https://github.com/humam-hossain/nn">nn</a> | cd <a href="https://github.com/humam-hossain/antigravity-cli-statusline">antigravity-cli-statusline</a></code>
+</div>
 <!-- PROJECTS:END -->
 
 <!-- METRICS:START -->
