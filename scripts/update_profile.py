@@ -29,6 +29,7 @@ except (ImportError, ModuleNotFoundError):
     from generate_hero import generate_svg
 
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
+PROJECTS_CONFIG_PATH = ROOT_DIR / "config" / "projects.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
 HERO_SVG_PATH = ROOT_DIR / "assets" / "hero.svg"
 GRAPHQL_ENDPOINT = "https://api.github.com/graphql"
@@ -349,6 +350,51 @@ def save_cache(cache_path: Path, data: dict) -> None:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     with open(cache_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+
+def load_curated_projects(config_path: Path) -> list[dict]:
+    """
+    Loads config/projects.json and normalizes entries to standard dicts:
+    {"owner": str, "name": str, "repo": str, "description": str | None, "tag": str | None}.
+    """
+    if not config_path.is_file():
+        log_warn(f"Projects config not found at {config_path}. Using empty list.")
+        return []
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        log_warn(f"Failed to parse {config_path}: {e}")
+        return []
+
+    items = data.get("projects", [])
+    normalized = []
+    for item in items:
+        if isinstance(item, str):
+            parts = item.split("/")
+            owner = parts[0] if len(parts) > 1 else "humam-hossain"
+            name = parts[-1]
+            normalized.append({
+                "owner": owner,
+                "name": name,
+                "repo": f"{owner}/{name}",
+                "description": None,
+                "tag": None,
+            })
+        elif isinstance(item, dict):
+            repo_str = item.get("repo", "")
+            parts = repo_str.split("/") if repo_str else []
+            owner = parts[0] if len(parts) > 1 else "humam-hossain"
+            name = item.get("name") or (parts[-1] if parts else "")
+            normalized.append({
+                "owner": owner,
+                "name": name,
+                "repo": f"{owner}/{name}",
+                "description": item.get("description"),
+                "tag": item.get("tag"),
+            })
+    return normalized
 
 
 def aggregate_loc(config: dict, cache: dict, token: str | None = None) -> tuple[int, int]:

@@ -1,0 +1,28 @@
+{
+  "projects": [
+    {
+      "repo": "humam-hossain/linux_shell_scripting",
+      "name": "linux_shell_scripting",
+      "description": "Shell scripts and automation utilities for Unix systems",
+      "tag": "DevOps"
+    },
+    {
+      "repo": "humam-hossain/Python",
+      "name": "Python",
+      "description": "Python algorithms, utilities, and robotics tools",
+      "tag": "Robotics & AI"
+    },
+    {
+      "repo": "humam-hossain/nn",
+      "name": "nn",
+      "description": "C-based neural network framework for matrix operations and gradient learning",
+      "tag": "Machine Learning"
+    },
+    {
+      "repo": "humam-hossain/antigravity-cli-statusline",
+      "name": "antigravity-cli-statusline",
+      "description": "Advanced responsive statusline plugin for Antigravity CLI",
+      "tag": "CLI Tooling"
+    }
+  ]
+}
