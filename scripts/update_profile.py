@@ -391,11 +391,12 @@ def load_curated_projects(config_path: Path) -> list[dict]:
             repo_str = item.get("repo", "")
             parts = repo_str.split("/") if repo_str else []
             owner = parts[0] if len(parts) > 1 else "humam-hossain"
-            name = item.get("name") or (parts[-1] if parts else "")
+            repo_name = parts[-1] if parts else (item.get("name") or "")
+            name = item.get("name") or repo_name
             normalized.append({
                 "owner": owner,
                 "name": name,
-                "repo": f"{owner}/{name}",
+                "repo": f"{owner}/{repo_name}",
                 "description": item.get("description"),
                 "tag": item.get("tag"),
             })
