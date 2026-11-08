@@ -36,7 +36,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Skills & Content Extensibility (CONTENT)
 
-- [ ] **CONTENT-01**: Plug-and-play blog / article section ready to pull RSS or markdown links
+- [x] **CONTENT-01**: Plug-and-play blog / article section ready to pull RSS or markdown links
 - [x] **CONTENT-02**: Terminal-themed categorized skills matrix (AI & Data Science, Backend & Systems, SQA & Automation, Embedded/IoT)
 
 ## v2 Requirements
@@ -77,7 +77,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | METRIC-02 | Phase 4 | Complete |
 | METRIC-03 | Phase 4 | Complete |
 | METRIC-04 | Phase 4 | Complete |
-| CONTENT-01 | Phase 5 | Pending |
+| CONTENT-01 | Phase 5 | Complete |
 | CONTENT-02 | Phase 5 | Complete |
 | AUTO-02 | Phase 6 | Pending |
 | AUTO-03 | Phase 6 | Pending |
