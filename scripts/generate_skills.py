@@ -203,3 +203,37 @@ def generate_skills_svg(skills_data: list[dict] | None = None, theme: dict | Non
     # Validate strict XML integrity
     ET.fromstring(svg_text)
     return svg_text
+
+
+def write_svg_idempotent(path: Path, content: str) -> bool:
+    """
+    Validates XML and writes to path ONLY if content has changed.
+    Returns True if written, False if skipped due to byte-equality.
+    """
+    ET.fromstring(content)
+    if path.exists():
+        existing = path.read_text(encoding="utf-8")
+        if existing == content:
+            return False
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return True
+
+
+def main() -> int:
+    """CLI Entry point for standalone SVG generation."""
+    print("Generating assets/skills.svg...")
+    skills_data = load_skills_config()
+    svg_content = generate_skills_svg(skills_data)
+    written = write_svg_idempotent(OUTPUT_PATH, svg_content)
+    if written:
+        print(f"Successfully generated {OUTPUT_PATH}")
+    else:
+        print(f"{OUTPUT_PATH} is already up to date (idempotent skip)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

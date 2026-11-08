@@ -19,6 +19,7 @@ from scripts.generate_skills import (
     QUADRANT_SLOTS,
     generate_skills_svg,
     load_skills_config,
+    write_svg_idempotent,
 )
 
 
@@ -81,3 +82,82 @@ def test_generate_skills_svg_structure():
     # Neofetch prompt
     assert "humam@workstation:~$" in svg
     assert "neofetch --skills" in svg
+
+
+def test_skills_quadrants_and_accents():
+    """Assert all 4 quadrant IDs and ANSI accents are present in generated SVG."""
+    svg = generate_skills_svg()
+
+    # All 4 quadrant IDs
+    assert 'id="quadrant-ai-data-science"' in svg
+    assert 'id="quadrant-backend-systems"' in svg
+    assert 'id="quadrant-sqa-automation"' in svg
+    assert 'id="quadrant-embedded-robotics"' in svg
+
+    # All 4 ANSI accent colors
+    assert "#a5d6ff" in svg  # Cyan (AI & Data Science)
+    assert "#ffa657" in svg  # Amber (Backend & Systems)
+    assert "#3fb950" in svg  # Green (SQA & Automation)
+    assert "#d2a8ff" in svg  # Purple (Embedded & Robotics)
+
+
+def test_skills_pill_wrapping_and_capping():
+    """Verify flow-pack pill wrapping and hard capacity capping at 6 skills."""
+    test_data = [
+        {
+            "id": "test-overflow",
+            "title": "Overflow Test",
+            "accent": "#58a6ff",
+            "skills": [
+                "SkillOne",
+                "SkillTwo",
+                "SkillThree",
+                "SkillFour",
+                "SkillFive",
+                "SkillSix",
+                "SkillSevenOverflow",
+            ],
+        }
+    ]
+    svg = generate_skills_svg(test_data)
+
+    # Skills 1 through 6 should be rendered
+    assert "SkillOne" in svg
+    assert "SkillSix" in svg
+
+    # Skill 7 must be capped (excluded) to guarantee zero boundary overflow
+    assert "SkillSevenOverflow" not in svg
+
+    # XML must still parse cleanly
+    root = ET.fromstring(svg)
+    pills = root.findall(".//{http://www.w3.org/2000/svg}g[@class='skill-pill']")
+    if not pills:
+        # Without namespace or local
+        pills = [el for el in root.iter() if el.attrib.get("class") == "skill-pill"]
+    assert len(pills) == 6
+
+
+def test_skills_hover_css_and_xml_validity():
+    """Verify embedded CSS hover transitions and clean ElementTree parsing."""
+    svg = generate_skills_svg()
+    root = ET.fromstring(svg)
+    assert root.tag.endswith("svg")
+
+    # CSS hover styles
+    assert ".skill-pill:hover .pill-bg" in svg
+    assert ".skill-pill:hover .pill-text" in svg
+    assert "transition: transform" in svg
+
+
+def test_skills_idempotent_write(tmp_path):
+    """Verify write_svg_idempotent returns True on new content and False on identical content."""
+    test_svg_path = tmp_path / "test_skills.svg"
+    content = generate_skills_svg()
+
+    # First write -> True
+    assert write_svg_idempotent(test_svg_path, content) is True
+    assert test_svg_path.is_file()
+
+    # Second write with identical content -> False (idempotent skip)
+    assert write_svg_idempotent(test_svg_path, content) is False
+

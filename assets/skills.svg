@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 380" width="100%" height="100%">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Fira Code", monospace; text-rendering: geometricPrecision; }
+      .title { font-size: 13px; fill: #8b949e; text-anchor: middle; font-weight: 400; }
+      .prompt-cmd { font-size: 13px; }
+      .prompt-user { fill: #58a6ff; font-weight: 600; }
+      .prompt-arg { fill: #c9d1d9; font-weight: 400; }
+      .cat-title { font-size: 13px; font-weight: 600; }
+      .pill-text { font-size: 11px; fill: #c9d1d9; font-weight: 500; }
+      .skill-pill { transition: transform 0.15s ease-in-out; }
+      .skill-pill:hover .pill-bg { fill: #282e37; stroke: #8b949e; }
+      .skill-pill:hover .pill-text { fill: #f0f6fc; }
+    </style>
+  </defs>
+
+  <!-- Terminal Window Frame -->
+  <rect width="850" height="380" rx="10" ry="10" fill="#0d1117" stroke="#30363d" stroke-width="1" />
+
+  <!-- Header Bar -->
+  <rect width="850" height="38" rx="10" ry="10" fill="#161b22" />
+  <rect y="28" width="850" height="10" fill="#161b22" />
+  <line x1="0" y1="38" x2="850" y2="38" stroke="#30363d" stroke-width="1" />
+
+  <!-- Traffic Lights -->
+  <circle cx="25" cy="19" r="6" fill="#ff5f56" />
+  <circle cx="45" cy="19" r="6" fill="#ffbd2e" />
+  <circle cx="65" cy="19" r="6" fill="#27c93f" />
+
+  <!-- Window Title -->
+  <text x="425" y="24" class="mono title">skills — zsh</text>
+
+  <!-- Prompt Line -->
+  <text x="30" y="62" class="mono prompt-cmd">
+    <tspan class="prompt-user">humam@workstation:~$ </tspan>
+    <tspan class="prompt-arg">neofetch --skills</tspan>
+  </text>
+
+  <!-- 2x2 Quadrant Grid -->
+  <g id="quadrant-ai-data-science">
+    <rect x="30" y="80" width="380" height="135" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+    <text x="46" y="105" fill="#a5d6ff" class="mono cat-title">AI &amp; Data Science</text>
+    <g class="skill-pill"><rect x="46" y="124" width="80" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="58" cy="137" r="3" fill="#a5d6ff" /><text x="68" y="141" class="mono pill-text">PyTorch</text></g>
+    <g class="skill-pill"><rect x="134" y="124" width="73" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="146" cy="137" r="3" fill="#a5d6ff" /><text x="156" y="141" class="mono pill-text">OpenCV</text></g>
+    <g class="skill-pill"><rect x="215" y="124" width="114" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="227" cy="137" r="3" fill="#a5d6ff" /><text x="237" y="141" class="mono pill-text">Scikit-learn</text></g>
+    <g class="skill-pill"><rect x="46" y="160" width="73" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="58" cy="173" r="3" fill="#a5d6ff" /><text x="68" y="177" class="mono pill-text">Pandas</text></g>
+    <g class="skill-pill"><rect x="127" y="160" width="86" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="139" cy="173" r="3" fill="#a5d6ff" /><text x="149" y="177" class="mono pill-text">PyBullet</text></g>
+  </g>
+  <g id="quadrant-backend-systems">
+    <rect x="440" y="80" width="380" height="135" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+    <text x="456" y="105" fill="#ffa657" class="mono cat-title">Backend &amp; Systems</text>
+    <g class="skill-pill"><rect x="456" y="124" width="73" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="468" cy="137" r="3" fill="#ffa657" /><text x="478" y="141" class="mono pill-text">Python</text></g>
+    <g class="skill-pill"><rect x="537" y="124" width="80" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="549" cy="137" r="3" fill="#ffa657" /><text x="559" y="141" class="mono pill-text">Node.js</text></g>
+    <g class="skill-pill"><rect x="625" y="124" width="100" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="637" cy="137" r="3" fill="#ffa657" /><text x="647" y="141" class="mono pill-text">Linux/Bash</text></g>
+    <g class="skill-pill"><rect x="456" y="160" width="80" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="468" cy="173" r="3" fill="#ffa657" /><text x="478" y="177" class="mono pill-text">MongoDB</text></g>
+    <g class="skill-pill"><rect x="544" y="160" width="73" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="556" cy="173" r="3" fill="#ffa657" /><text x="566" y="177" class="mono pill-text">SQLite</text></g>
+  </g>
+  <g id="quadrant-sqa-automation">
+    <rect x="30" y="230" width="380" height="135" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+    <text x="46" y="255" fill="#3fb950" class="mono cat-title">SQA &amp; Automation</text>
+    <g class="skill-pill"><rect x="46" y="274" width="73" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="58" cy="287" r="3" fill="#3fb950" /><text x="68" y="291" class="mono pill-text">PyTest</text></g>
+    <g class="skill-pill"><rect x="127" y="274" width="59" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="139" cy="287" r="3" fill="#3fb950" /><text x="149" y="291" class="mono pill-text">Jest</text></g>
+    <g class="skill-pill"><rect x="194" y="274" width="66" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="206" cy="287" r="3" fill="#3fb950" /><text x="216" y="291" class="mono pill-text">CI/CD</text></g>
+    <g class="skill-pill"><rect x="268" y="274" width="120" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="280" cy="287" r="3" fill="#3fb950" /><text x="290" y="291" class="mono pill-text">Test Planning</text></g>
+    <g class="skill-pill"><rect x="46" y="310" width="134" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="58" cy="323" r="3" fill="#3fb950" /><text x="68" y="327" class="mono pill-text">Static Analysis</text></g>
+  </g>
+  <g id="quadrant-embedded-robotics">
+    <rect x="440" y="230" width="380" height="135" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+    <text x="456" y="255" fill="#d2a8ff" class="mono cat-title">Embedded &amp; Robotics</text>
+    <g class="skill-pill"><rect x="456" y="274" width="66" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="468" cy="287" r="3" fill="#d2a8ff" /><text x="478" y="291" class="mono pill-text">C/C++</text></g>
+    <g class="skill-pill"><rect x="530" y="274" width="59" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="542" cy="287" r="3" fill="#d2a8ff" /><text x="552" y="291" class="mono pill-text">ROS2</text></g>
+    <g class="skill-pill"><rect x="597" y="274" width="80" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="609" cy="287" r="3" fill="#d2a8ff" /><text x="619" y="291" class="mono pill-text">Arduino</text></g>
+    <g class="skill-pill"><rect x="685" y="274" width="66" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="697" cy="287" r="3" fill="#d2a8ff" /><text x="707" y="291" class="mono pill-text">ESP32</text></g>
+    <g class="skill-pill"><rect x="456" y="310" width="100" height="26" rx="4" class="pill-bg" fill="#21262d" stroke="#30363d" stroke-width="1" /><circle cx="468" cy="323" r="3" fill="#d2a8ff" /><text x="478" y="327" class="mono pill-text">Kinematics</text></g>
+  </g>
+</svg>
