@@ -13,10 +13,15 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+import datetime
+
 from scripts.update_profile import (
     DEFAULT_LANGUAGE_FIXTURES,
+    DEFAULT_STREAK_FIXTURES,
     aggregate_top_languages,
+    compute_streaks_from_calendar,
     fetch_language_telemetry,
+    fetch_streak_telemetry,
 )
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -214,3 +219,87 @@ def test_fetch_language_telemetry_cache_fallback():
         result_err = fetch_language_telemetry(config, error_cache, token="fake_token")
         assert result_err == DEFAULT_LANGUAGE_FIXTURES
 
+
+
+def test_streak_calculation_active_today():
+    """Verify streak includes today when today has contributions."""
+    now = datetime.datetime(2026, 11, 8, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    days = [
+        {"date": "2026-11-06", "contributionCount": 4},
+        {"date": "2026-11-07", "contributionCount": 7},
+        {"date": "2026-11-08", "contributionCount": 2},
+    ]
+    current, longest, total = compute_streaks_from_calendar(days, now_utc=now)
+    assert current == 3
+    assert longest == 3
+    assert total == 13
+
+
+def test_streak_calculation_today_grace_period():
+    """Verify streak does not break if yesterday has contributions and today has 0."""
+    now = datetime.datetime(2026, 11, 8, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    days = [
+        {"date": "2026-11-06", "contributionCount": 4},
+        {"date": "2026-11-07", "contributionCount": 7},
+        {"date": "2026-11-08", "contributionCount": 0},
+    ]
+    current, longest, total = compute_streaks_from_calendar(days, now_utc=now)
+    assert current == 2  # Yesterday + day before
+    assert longest == 2
+    assert total == 11
+
+
+def test_streak_calculation_inactive_standby():
+    """Verify streak resets to 0 if both today and yesterday have 0 contributions."""
+    now = datetime.datetime(2026, 11, 8, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    days = [
+        {"date": "2026-11-06", "contributionCount": 4},
+        {"date": "2026-11-07", "contributionCount": 0},
+        {"date": "2026-11-08", "contributionCount": 0},
+    ]
+    current, longest, total = compute_streaks_from_calendar(days, now_utc=now)
+    assert current == 0
+    assert longest == 1
+    assert total == 4
+
+
+def test_longest_streak_historical_carry():
+    """Verify longest streak carries historical maximum even after current streak breaks."""
+    now = datetime.datetime(2026, 11, 8, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    days = [
+        {"date": "2026-11-01", "contributionCount": 1},
+        {"date": "2026-11-02", "contributionCount": 1},
+        {"date": "2026-11-03", "contributionCount": 1},
+        {"date": "2026-11-04", "contributionCount": 1},
+        {"date": "2026-11-05", "contributionCount": 0},  # Break
+        {"date": "2026-11-06", "contributionCount": 1},
+        {"date": "2026-11-07", "contributionCount": 1},
+        {"date": "2026-11-08", "contributionCount": 1},
+    ]
+    current, longest, total = compute_streaks_from_calendar(days, now_utc=now)
+    assert current == 3
+    assert longest == 4  # Historical max from Nov 1-4
+    assert total == 7
+
+
+def test_fetch_streak_telemetry_offline_fallback():
+    """Verify fetch_streak_telemetry fallback behavior across tiers."""
+    # Tier 2: cached
+    cache_with_streaks = {
+        "streak_metrics": {
+            "last_updated": "2026-11-08T00:00:00Z",
+            "current_streak": 10,
+            "longest_streak": 20,
+            "total_contributions": 500,
+            "standby": False,
+        }
+    }
+    result = fetch_streak_telemetry(cache_with_streaks, token=None)
+    assert result["current_streak"] == 10
+    assert result["longest_streak"] == 20
+
+    # Tier 3: default fixtures
+    empty_cache: dict = {}
+    result_fix = fetch_streak_telemetry(empty_cache, token=None)
+    assert result_fix == DEFAULT_STREAK_FIXTURES
+    assert "streak_metrics" in empty_cache

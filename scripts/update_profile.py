@@ -633,6 +633,130 @@ def fetch_language_telemetry(config: dict, cache: dict, token: str | None = None
     return DEFAULT_LANGUAGE_FIXTURES
 
 
+DEFAULT_STREAK_FIXTURES = {
+    "current_streak": 5,
+    "longest_streak": 14,
+    "total_contributions": 482,
+    "standby": False,
+}
+
+
+def compute_streaks_from_calendar(
+    contribution_days: list[dict],
+    now_utc: datetime.datetime | None = None,
+) -> tuple[int, int, int]:
+    """
+    Computes (current_streak, longest_streak, total_contributions) from calendar days.
+    Implements GitHub today-grace-period: if user committed yesterday, streak is active
+    giving until end-of-day UTC today to commit.
+    """
+    if now_utc is None:
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+    today = now_utc.date()
+    yesterday = today - datetime.timedelta(days=1)
+
+    sorted_days = sorted(contribution_days, key=lambda d: d["date"])
+    day_map = {d["date"]: d.get("contributionCount", 0) for d in sorted_days}
+    total_contributions = sum(day_map.values())
+
+    # 1. Longest streak calculation
+    longest_streak = 0
+    curr_run = 0
+    for d in sorted_days:
+        if d.get("contributionCount", 0) > 0:
+            curr_run += 1
+            if curr_run > longest_streak:
+                longest_streak = curr_run
+        else:
+            curr_run = 0
+
+    # 2. Current streak with grace period
+    has_today = day_map.get(today.isoformat(), 0) > 0
+    has_yesterday = day_map.get(yesterday.isoformat(), 0) > 0
+
+    if not has_today and not has_yesterday:
+        return 0, longest_streak, total_contributions
+
+    start_date = today if has_today else yesterday
+    current_streak = 0
+    check_date = start_date
+
+    while True:
+        if day_map.get(check_date.isoformat(), 0) > 0:
+            current_streak += 1
+            check_date -= datetime.timedelta(days=1)
+        else:
+            break
+
+    return current_streak, max(longest_streak, current_streak), total_contributions
+
+
+def fetch_streak_telemetry(cache: dict, token: str | None = None) -> dict:
+    """
+    Tier 1: Live GraphQL query to contributionsCollection.contributionCalendar
+    Tier 2: Cache fallback from cache['streak_metrics']
+    Tier 3: DEFAULT_STREAK_FIXTURES
+    """
+    if token:
+        try:
+            query = """
+            query GetContributionCalendar {
+              viewer {
+                contributionsCollection {
+                  contributionCalendar {
+                    totalContributions
+                    weeks {
+                      contributionDays {
+                        date
+                        contributionCount
+                        color
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """
+            data = execute_graphql(query, token=token)
+            cal = (
+                data.get("data", {})
+                .get("viewer", {})
+                .get("contributionsCollection", {})
+                .get("contributionCalendar", {})
+            )
+            weeks = cal.get("weeks", [])
+            all_days = []
+            for week in weeks:
+                all_days.extend(week.get("contributionDays", []))
+
+            current, longest, total = compute_streaks_from_calendar(all_days)
+            streak_result = {
+                "current_streak": current,
+                "longest_streak": longest,
+                "total_contributions": total,
+                "standby": current == 0,
+            }
+            cache["streak_metrics"] = {
+                "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                **streak_result,
+            }
+            return streak_result
+        except Exception as e:
+            log_warn(f"Failed to fetch streak telemetry via GraphQL: {e}. Falling back to cache.")
+
+    cached_streaks = cache.get("streak_metrics")
+    if cached_streaks and "current_streak" in cached_streaks:
+        log_info("Using cached streak metrics from data/cache.json")
+        return cached_streaks
+
+    log_warn("No cached streak metrics found. Using default fixtures.")
+    cache["streak_metrics"] = {
+        "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        **DEFAULT_STREAK_FIXTURES,
+    }
+    return DEFAULT_STREAK_FIXTURES
+
+
 def aggregate_loc(config: dict, cache: dict, token: str | None = None) -> tuple[int, int]:
     """
     Enumerates owned non-fork repositories and aggregates LOC (additions, deletions).
