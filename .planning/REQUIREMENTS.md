@@ -17,9 +17,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Open Source & Projects Showcase (PROJ)
 
-- [ ] **PROJ-01**: Live Open Source Projects Dashboard displaying real-time Stars (⭐), Forks (🍴), Open Issues (🛎️), and Open Pull Requests (📬)
-- [ ] **PROJ-02**: Configurable repository selection enabling user to pin specific repositories (e.g., KRPC robotics, homeserver, IoT environmental monitor) with automatic fallback to top active repos
-- [ ] **PROJ-03**: Terminal-box styling (`┌───┐`, `│`, `└───┘` or terminal window card) adhering to dark terminal palette
+- [x] **PROJ-01**: Live Open Source Projects Dashboard displaying real-time Stars (⭐), Forks (🍴), Open Issues (🛎️), and Open Pull Requests (📬)
+- [x] **PROJ-02**: Configurable repository selection enabling user to pin specific repositories (e.g., KRPC robotics, homeserver, IoT environmental monitor) with automatic fallback to top active repos
+- [x] **PROJ-03**: Terminal-box styling (`┌───┐`, `│`, `└───┘` or terminal window card) adhering to dark terminal palette
 
 ### Metrics, Languages & Activity (METRIC)
 
@@ -70,9 +70,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | HERO-04 | Phase 2 | Complete |
 | HERO-05 | Phase 2 | Complete |
 | AUTO-01 | Phase 2 | Complete |
-| PROJ-01 | Phase 3 | Pending |
-| PROJ-02 | Phase 3 | Pending |
-| PROJ-03 | Phase 3 | Pending |
+| PROJ-01 | Phase 3 | Complete |
+| PROJ-02 | Phase 3 | Complete |
+| PROJ-03 | Phase 3 | Complete |
 | METRIC-01 | Phase 4 | Pending |
 | METRIC-02 | Phase 4 | Pending |
 | METRIC-03 | Phase 4 | Pending |
