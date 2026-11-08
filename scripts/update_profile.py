@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import calendar
 import datetime
+import html
 import json
 import os
 from pathlib import Path
@@ -33,11 +34,25 @@ try:
 except (ImportError, ModuleNotFoundError):
     from generate_projects import generate_projects_svg, DEFAULT_PROJECT_FIXTURES
 
+try:
+    from scripts.generate_metrics import (
+        generate_metrics_svg,
+        DEFAULT_STREAK_FIXTURES as GEN_DEFAULT_STREAK_FIXTURES,
+        DEFAULT_LANGUAGE_FIXTURES as GEN_DEFAULT_LANG_FIXTURES,
+    )
+except (ImportError, ModuleNotFoundError):
+    from generate_metrics import (
+        generate_metrics_svg,
+        DEFAULT_STREAK_FIXTURES as GEN_DEFAULT_STREAK_FIXTURES,
+        DEFAULT_LANGUAGE_FIXTURES as GEN_DEFAULT_LANG_FIXTURES,
+    )
+
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 PROJECTS_CONFIG_PATH = ROOT_DIR / "config" / "projects.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
 HERO_SVG_PATH = ROOT_DIR / "assets" / "hero.svg"
 PROJECTS_SVG_PATH = ROOT_DIR / "assets" / "projects.svg"
+METRICS_SVG_PATH = ROOT_DIR / "assets" / "metrics.svg"
 README_PATH = ROOT_DIR / "README.md"
 GRAPHQL_ENDPOINT = "https://api.github.com/graphql"
 
@@ -1004,6 +1019,222 @@ def update_readme_badges(readme_path: Path) -> bool:
     return False
 
 
+BOT_AUTHORS = {"github-actions[bot]", "dependabot[bot]", "github-actions", "dependabot"}
+FILTER_PREFIXES = ("docs(update):", "chore(deps):", "bump ")
+
+DEFAULT_ACTIVITY_FIXTURES = [
+    {
+        "sha": "a1b2c3d",
+        "repo": "linux_shell_scripting",
+        "message": "fix: resolve path resolution in bootstrap script",
+        "time_ago": "2 days ago",
+        "url": "https://github.com/humam-hossain/linux_shell_scripting/commit/a1b2c3d",
+        "repo_url": "https://github.com/humam-hossain/linux_shell_scripting",
+    },
+    {
+        "sha": "d4e5f6a",
+        "repo": "Python",
+        "message": "feat(robotics): add quaternion kinematics module",
+        "time_ago": "4 days ago",
+        "url": "https://github.com/humam-hossain/Python/commit/d4e5f6a",
+        "repo_url": "https://github.com/humam-hossain/Python",
+    },
+    {
+        "sha": "b7c8d9e",
+        "repo": "nn",
+        "message": "perf: optimize matrix multiplication cache locality",
+        "time_ago": "1 week ago",
+        "url": "https://github.com/humam-hossain/nn/commit/b7c8d9e",
+        "repo_url": "https://github.com/humam-hossain/nn",
+    },
+]
+
+
+def compute_relative_time_str(dt: datetime.datetime, now_utc: datetime.datetime | None = None) -> str:
+    """
+    Calculates elapsed duration between dt and now_utc and returns a human-friendly string:
+    'just now', 'X hours ago', '1 day ago', 'X days ago', '1 week ago', 'X weeks ago', 'X months ago'.
+    """
+    if now_utc is None:
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+
+    diff = now_utc - dt
+    total_seconds = max(int(diff.total_seconds()), 0)
+
+    if total_seconds < 3600:
+        return "just now"
+    hours = total_seconds // 3600
+    if hours < 24:
+        return "1 hour ago" if hours == 1 else f"{hours} hours ago"
+    days = total_seconds // 86400
+    if days < 7:
+        return "1 day ago" if days == 1 else f"{days} days ago"
+    weeks = days // 7
+    if weeks < 5:
+        return "1 week ago" if weeks == 1 else f"{weeks} weeks ago"
+    months = days // 30
+    return "1 month ago" if months == 1 else f"{months} months ago"
+
+
+def format_git_activity_stream(activities: list[dict], now: datetime.datetime | None = None) -> str:
+    """
+    Renders terminal-styled <pre><code> git activity stream with clickable links.
+    Clamps commit message to 50 characters with ellipsis.
+    Filters out bots and updater feedback loop commits.
+    """
+    filtered = []
+    for item in activities:
+        author = item.get("author", "").lower()
+        msg = item.get("message", "").strip()
+        if author in BOT_AUTHORS or any(author.startswith(b) for b in ("dependabot", "github-actions")):
+            continue
+        if any(msg.startswith(p) for p in FILTER_PREFIXES):
+            continue
+        filtered.append(item)
+
+    lines = [
+        '<div align="left">',
+        "<pre><code>humam@workstation:~$ git log --graph --oneline -n 6",
+    ]
+
+    for item in filtered[:6]:
+        sha = item.get("sha", "")[:7]
+        repo = item.get("repo", "repo")
+        commit_url = item.get("url", f"https://github.com/humam-hossain/{repo}")
+        repo_url = item.get("repo_url", f"https://github.com/humam-hossain/{repo}")
+        raw_msg = item.get("message", "").strip().split("\n")[0]
+
+        # 50-character clamping
+        if len(raw_msg) > 50:
+            clamped = raw_msg[:47] + "..."
+        else:
+            clamped = raw_msg
+
+        time_ago = item.get("time_ago")
+        if not time_ago and "created_at" in item:
+            try:
+                dt = parse_iso_datetime(item["created_at"])
+                time_ago = compute_relative_time_str(dt, now_utc=now)
+            except Exception:
+                time_ago = "recently"
+        if not time_ago:
+            time_ago = "recently"
+
+        escaped_repo = html.escape(repo)
+        escaped_msg = html.escape(clamped)
+
+        lines.append(
+            f'* <a href="{commit_url}">[{sha}]</a> '
+            f'(<a href="{repo_url}">{escaped_repo}</a>) '
+            f'{escaped_msg} ({time_ago})'
+        )
+
+    lines.append("</code></pre>")
+    lines.append("</div>")
+    return "\n".join(lines)
+
+
+def fetch_recent_activity(cache: dict, token: str | None = None) -> list[dict]:
+    """
+    Tier 1: Query GitHub Public Events or GraphQL commits
+    Tier 2: Cached recent_activity from data/cache.json
+    Tier 3: DEFAULT_ACTIVITY_FIXTURES
+    """
+    if token:
+        try:
+            url = "https://api.github.com/users/humam-hossain/events/public?per_page=30"
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "User-Agent": "humam-hossain-profile-updater",
+                    "Accept": "application/vnd.github.v3+json",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                events = json.loads(resp.read().decode("utf-8"))
+
+            activities = []
+            for ev in events:
+                if ev.get("type") == "PushEvent":
+                    repo_full = ev.get("repo", {}).get("name", "")
+                    repo_short = repo_full.split("/")[-1] if "/" in repo_full else repo_full
+                    created_at = ev.get("created_at", "")
+                    commits = ev.get("payload", {}).get("commits", [])
+                    for c in commits:
+                        sha = c.get("sha", "")[:7]
+                        msg = c.get("message", "")
+                        author_name = c.get("author", {}).get("name", "")
+                        activities.append({
+                            "sha": sha,
+                            "repo": repo_short,
+                            "message": msg,
+                            "author": author_name,
+                            "created_at": created_at,
+                            "url": f"https://github.com/{repo_full}/commit/{sha}",
+                            "repo_url": f"https://github.com/{repo_full}",
+                        })
+            if activities:
+                cache["recent_activity"] = {
+                    "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "events": activities[:10],
+                }
+                return activities
+        except Exception as e:
+            log_warn(f"Failed to fetch public events: {e}. Falling back to cache.")
+
+    cached = cache.get("recent_activity", {}).get("events")
+    if cached:
+        log_info("Using cached recent activity from data/cache.json")
+        return cached
+
+    log_warn("No cached recent activity found. Using default fixtures.")
+    cache["recent_activity"] = {
+        "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "events": DEFAULT_ACTIVITY_FIXTURES,
+    }
+    return DEFAULT_ACTIVITY_FIXTURES
+
+
+def update_readme_metrics(readme_path: Path, activity_html: str) -> bool:
+    """
+    Injects metrics SVG and git activity stream between <!-- METRICS:START -->
+    and <!-- METRICS:END --> tags idempotently.
+    """
+    if not readme_path.is_file():
+        log_warn(f"README file not found at {readme_path}")
+        return False
+
+    content = readme_path.read_text(encoding="utf-8")
+    start_tag = "<!-- METRICS:START -->"
+    end_tag = "<!-- METRICS:END -->"
+
+    if start_tag not in content or end_tag not in content:
+        log_warn("README.md missing <!-- METRICS:START --> or <!-- METRICS:END --> markers.")
+        return False
+
+    start_idx = content.index(start_tag) + len(start_tag)
+    end_idx = content.index(end_tag)
+
+    replacement = f"""
+<div align="center">
+  <img src="./assets/metrics.svg" alt="Languages, Streaks & Metrics" width="100%" />
+</div>
+
+{activity_html}
+"""
+    new_content = content[:start_idx] + "\n" + replacement.strip() + "\n" + content[end_idx:]
+    if new_content == content:
+        log_info("README.md metrics section already up to date (idempotent skip)")
+        return False
+
+    readme_path.write_text(new_content, encoding="utf-8")
+    log_ok("Updated README.md with metrics telemetry and activity stream")
+    return True
+
+
 def main() -> int:
     """CLI Entry point for profile update engine."""
     log_info("humam@workstation profile updater v1.0.0")
@@ -1037,6 +1268,18 @@ def main() -> int:
     projects_svg = generate_projects_svg(projects_data)
     write_svg_idempotent(PROJECTS_SVG_PATH, projects_svg)
     update_readme_projects(README_PATH, projects_data)
+
+    # 3. Phase 4: Languages, Streaks & Metrics
+    log_info("Refreshing languages, streaks & telemetry...")
+    streak_data = fetch_streak_telemetry(cache, token)
+    languages_data = fetch_language_telemetry(config, cache, token)
+    metrics_svg = generate_metrics_svg(streak_data, languages_data, theme=config)
+    write_svg_idempotent(METRICS_SVG_PATH, metrics_svg)
+
+    activities = fetch_recent_activity(cache, token)
+    activity_html = format_git_activity_stream(activities)
+    update_readme_metrics(README_PATH, activity_html)
+    update_readme_badges(README_PATH)
 
     save_cache(CACHE_PATH, cache)
     log_ok("Profile telemetry refresh complete.")

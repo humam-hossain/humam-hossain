@@ -21,14 +21,22 @@ from scripts.generate_metrics import (
     generate_metrics_svg,
 )
 from scripts.update_profile import (
+    BOT_AUTHORS,
+    DEFAULT_ACTIVITY_FIXTURES,
     DEFAULT_LANGUAGE_FIXTURES,
     DEFAULT_STREAK_FIXTURES,
+    FILTER_PREFIXES,
     VISITOR_BADGE_MARKDOWN,
     aggregate_top_languages,
+    compute_relative_time_str,
     compute_streaks_from_calendar,
     fetch_language_telemetry,
+    fetch_recent_activity,
     fetch_streak_telemetry,
+    format_git_activity_stream,
+    main as update_profile_main,
     update_readme_badges,
+    update_readme_metrics,
 )
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -420,3 +428,209 @@ def test_update_readme_badges_idempotence(tmp_path):
     res2 = update_readme_badges(mock_readme)
     assert res2 is False
     assert mock_readme.read_text(encoding="utf-8") == first_pass_content
+
+
+def test_git_activity_formatting_output():
+    """Verify format_git_activity_stream produces terminal <pre><code> block with links."""
+    output = format_git_activity_stream(DEFAULT_ACTIVITY_FIXTURES)
+    assert '<div align="left">' in output
+    assert '<pre><code>humam@workstation:~$ git log --graph --oneline -n 6' in output
+    assert "linux_shell_scripting" in output
+    assert "Python" in output
+    assert "nn" in output
+    assert "* <a href=" in output
+    assert "</code></pre>" in output
+    assert "</div>" in output
+
+
+def test_git_activity_message_clamping_50_chars():
+    """Verify commit messages > 50 characters are clamped to 50 chars with ellipsis."""
+    long_msg = "feat(telemetry): implement super advanced multi-threaded hyper-speed commit stream analyzer"
+    activities = [
+        {
+            "sha": "1234567",
+            "repo": "test-repo",
+            "message": long_msg,
+            "author": "humam-hossain",
+            "time_ago": "1 day ago",
+        }
+    ]
+    output = format_git_activity_stream(activities)
+    expected_clamped = long_msg[:47] + "..."
+    assert expected_clamped in output
+    assert long_msg not in output
+
+
+def test_bot_filtering_github_actions_and_dependabot():
+    """Verify commits authored by bots are excluded from activity stream."""
+    activities = [
+        {
+            "sha": "aaaaaaa",
+            "repo": "test-repo",
+            "message": "valid human commit",
+            "author": "humam-hossain",
+            "time_ago": "1 day ago",
+        },
+        {
+            "sha": "bbbbbbb",
+            "repo": "test-repo",
+            "message": "bot commit 1",
+            "author": "dependabot[bot]",
+            "time_ago": "1 day ago",
+        },
+        {
+            "sha": "ccccccc",
+            "repo": "test-repo",
+            "message": "bot commit 2",
+            "author": "github-actions[bot]",
+            "time_ago": "1 day ago",
+        },
+    ]
+    output = format_git_activity_stream(activities)
+    assert "valid human commit" in output
+    assert "bot commit 1" not in output
+    assert "bot commit 2" not in output
+
+
+def test_updater_commit_prefix_filtering():
+    """Verify commits starting with updater/chore prefixes are filtered out."""
+    activities = [
+        {
+            "sha": "1111111",
+            "repo": "test-repo",
+            "message": "docs(update): refresh profile telemetry",
+            "author": "humam-hossain",
+            "time_ago": "1 hour ago",
+        },
+        {
+            "sha": "2222222",
+            "repo": "test-repo",
+            "message": "chore(deps): update actions",
+            "author": "humam-hossain",
+            "time_ago": "1 hour ago",
+        },
+        {
+            "sha": "3333333",
+            "repo": "test-repo",
+            "message": "bump version to 1.0.1",
+            "author": "humam-hossain",
+            "time_ago": "1 hour ago",
+        },
+        {
+            "sha": "4444444",
+            "repo": "test-repo",
+            "message": "feat: genuine feature commit",
+            "author": "humam-hossain",
+            "time_ago": "1 hour ago",
+        },
+    ]
+    output = format_git_activity_stream(activities)
+    assert "feat: genuine feature commit" in output
+    assert "docs(update):" not in output
+    assert "chore(deps):" not in output
+    assert "bump version" not in output
+
+
+def test_html_escaping_in_commit_messages():
+    """Verify HTML special characters in messages and repo names are escaped."""
+    activities = [
+        {
+            "sha": "5555555",
+            "repo": "repo<>&",
+            "message": "fix: sanitize <script>alert(1)</script> & enjoy",
+            "author": "humam-hossain",
+            "time_ago": "1 day ago",
+        }
+    ]
+    output = format_git_activity_stream(activities)
+    assert "&lt;script&gt;" in output
+    assert "<script>" not in output
+    assert "repo&lt;&gt;&amp;" in output
+
+
+def test_relative_time_formatting():
+    """Verify compute_relative_time_str produces human-friendly relative time strings."""
+    now = datetime.datetime(2026, 11, 8, 12, 0, 0, tzinfo=datetime.timezone.utc)
+
+    t_just_now = now - datetime.timedelta(minutes=15)
+    assert compute_relative_time_str(t_just_now, now_utc=now) == "just now"
+
+    t_1_hr = now - datetime.timedelta(hours=1)
+    assert compute_relative_time_str(t_1_hr, now_utc=now) == "1 hour ago"
+
+    t_5_hrs = now - datetime.timedelta(hours=5)
+    assert compute_relative_time_str(t_5_hrs, now_utc=now) == "5 hours ago"
+
+    t_1_day = now - datetime.timedelta(days=1)
+    assert compute_relative_time_str(t_1_day, now_utc=now) == "1 day ago"
+
+    t_4_days = now - datetime.timedelta(days=4)
+    assert compute_relative_time_str(t_4_days, now_utc=now) == "4 days ago"
+
+    t_2_weeks = now - datetime.timedelta(days=14)
+    assert compute_relative_time_str(t_2_weeks, now_utc=now) == "2 weeks ago"
+
+    t_2_months = now - datetime.timedelta(days=65)
+    assert compute_relative_time_str(t_2_months, now_utc=now) == "2 months ago"
+
+
+def test_readme_metrics_injection_and_idempotence(tmp_path):
+    """Verify surgical injection into README between markers and idempotent second run."""
+    mock_readme = tmp_path / "README.md"
+    original_content = (
+        "# User Profile\n\n"
+        "<!-- METRICS:START -->\n"
+        "<!-- METRICS:END -->\n\n"
+        "Footer note\n"
+    )
+    mock_readme.write_text(original_content, encoding="utf-8")
+    mock_html = "<pre><code>humam@workstation:~$ git log</code></pre>"
+
+    # 1. First injection
+    res1 = update_readme_metrics(mock_readme, mock_html)
+    assert res1 is True
+
+    updated_content = mock_readme.read_text(encoding="utf-8")
+    assert '<img src="./assets/metrics.svg"' in updated_content
+    assert "<code>humam@workstation:~$ git log" in updated_content
+    assert "# User Profile" in updated_content
+    assert "Footer note" in updated_content
+
+    # 2. Second injection with identical data -> idempotent skip
+    res2 = update_readme_metrics(mock_readme, mock_html)
+    assert res2 is False
+    assert mock_readme.read_text(encoding="utf-8") == updated_content
+
+
+def test_cache_persistence_keys():
+    """Verify data/cache.json retains all required telemetry sections."""
+    cache_path = Path(__file__).resolve().parent.parent / "data" / "cache.json"
+    assert cache_path.is_file()
+    with open(cache_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    required_keys = [
+        "baseline",
+        "repositories",
+        "totals",
+        "project_metrics",
+        "streak_metrics",
+        "top_languages",
+        "recent_activity",
+    ]
+    for k in required_keys:
+        assert k in data, f"Missing key {k} in data/cache.json"
+
+
+def test_full_coordinator_offline_execution(monkeypatch, capsys):
+    """Verify executing update_profile main() unauthenticated exits 0 and updates all assets."""
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+
+    exit_code = update_profile_main()
+    assert exit_code == 0
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "[WARN]" in output
+    assert "No token found" in output
