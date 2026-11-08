@@ -102,9 +102,16 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 03-01: Add GitHub GraphQL queries for repository metrics (stars, forks, issues, PRs) with configurable repo list
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 03-02: Generate terminal-box styled project dashboard (SVG or markdown table with shields.io terminal badges)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 03-03: Integrate dashboard generation into `update_profile.py` and inject into README.md
 
 ### Phase 4: Languages, Streaks & Metrics
