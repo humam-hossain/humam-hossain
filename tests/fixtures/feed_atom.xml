@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Workstation Research Notes</title>
+  <link href="https://example.com/atom" rel="self" />
+  <updated>2024-05-20T10:00:00Z</updated>
+  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
+  <entry>
+    <title>Continuous Integration for Embedded Firmware with PyTest</title>
+    <link href="https://example.com/embedded-ci" rel="alternate" />
+    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
+    <published>2024-05-18T08:00:00Z</published>
+    <summary>Automated hardware-in-the-loop test runners.</summary>
+  </entry>
+</feed>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>Dev Engineering Log</title>
+    <link>https://example.com</link>
+    <description>Engineering notes and whitepapers</description>
+    <item>
+      <title>Building High-Throughput Robotics Simulators with ROS2</title>
+      <link>https://example.com/robotics-sim</link>
+      <pubDate>Sun, 19 May 2024 14:30:00 GMT</pubDate>
+      <description>Practical guide to low-latency simulations.</description>
+    </item>
+    <item>
+      <title>Real-Time Embedded &amp; Edge AI Inference Optimization</title>
+      <link>https://example.com/edge-ai</link>
+      <pubDate>Mon, 01 Apr 2024 09:15:00 +0000</pubDate>
+      <description>Quantization techniques for ARM microcontrollers.</description>
+    </item>
+  </channel>
+</rss>

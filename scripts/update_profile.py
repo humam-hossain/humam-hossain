@@ -55,6 +55,7 @@ except (ImportError, ModuleNotFoundError):
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 PROJECTS_CONFIG_PATH = ROOT_DIR / "config" / "projects.json"
 SKILLS_CONFIG_PATH = ROOT_DIR / "config" / "skills.json"
+ARTICLES_CONFIG_PATH = ROOT_DIR / "config" / "articles.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
 HERO_SVG_PATH = ROOT_DIR / "assets" / "hero.svg"
 PROJECTS_SVG_PATH = ROOT_DIR / "assets" / "projects.svg"
@@ -1257,6 +1258,24 @@ def load_skills_config(config_path: Path) -> list[dict]:
     except Exception as e:
         log_warn(f"Failed to parse {config_path}: {e}. Using default categories.")
     return DEFAULT_SKILLS_DATA
+
+
+def load_articles_config(config_path: Path) -> dict:
+    """Loads config/articles.json with clean defaults."""
+    default_config = {
+        "rss_url": "",
+        "max_display": 4,
+        "curated_articles": [],
+    }
+    if not config_path.is_file():
+        log_warn(f"Articles config not found at {config_path}. Using defaults.")
+        return default_config
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            return {**default_config, **json.load(f)}
+    except Exception as e:
+        log_warn(f"Failed to parse {config_path}: {e}. Using defaults.")
+        return default_config
 
 
 def update_readme_skills(readme_path: Path) -> bool:

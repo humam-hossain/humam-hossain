@@ -1,0 +1,24 @@
+{
+  "rss_url": "",
+  "max_display": 4,
+  "curated_articles": [
+    {
+      "title": "Autonomous Rover Navigation with ROS2 and PyBullet",
+      "url": "https://github.com/humam-hossain",
+      "date": "2024-04-15",
+      "platform": "Project Note"
+    },
+    {
+      "title": "Continuous Test Automation Architecture for Linux Embedded Systems",
+      "url": "https://github.com/humam-hossain",
+      "date": "2024-02-10",
+      "platform": "Whitepaper"
+    },
+    {
+      "title": "NASA Astrobee kRPC Autonomous Docking Guidance System",
+      "url": "https://github.com/humam-hossain",
+      "date": "2023-11-20",
+      "platform": "JAXA Competition"
+    }
+  ]
+}
