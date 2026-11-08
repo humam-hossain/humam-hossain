@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ai-data-science",
+    "title": "AI & Data Science",
+    "accent": "#a5d6ff",
+    "skills": ["PyTorch", "OpenCV", "Scikit-learn", "Pandas", "PyBullet"]
+  },
+  {
+    "id": "backend-systems",
+    "title": "Backend & Systems",
+    "accent": "#ffa657",
+    "skills": ["Python", "Node.js", "Linux/Bash", "MongoDB", "SQLite"]
+  },
+  {
+    "id": "sqa-automation",
+    "title": "SQA & Automation",
+    "accent": "#3fb950",
+    "skills": ["PyTest", "Jest", "CI/CD", "Test Planning", "Static Analysis"]
+  },
+  {
+    "id": "embedded-robotics",
+    "title": "Embedded & Robotics",
+    "accent": "#d2a8ff",
+    "skills": ["C/C++", "ROS2", "Arduino", "ESP32", "Kinematics"]
+  }
+]
