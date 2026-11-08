@@ -1,0 +1,109 @@
+{
+  "data": {
+    "repo_0": {
+      "name": "linux_shell_scripting",
+      "owner": {
+        "login": "humam-hossain"
+      },
+      "description": "Shell scripts and automation utilities for Unix systems",
+      "stargazerCount": 12,
+      "forkCount": 3,
+      "issues": {
+        "totalCount": 1
+      },
+      "pullRequests": {
+        "totalCount": 0
+      },
+      "primaryLanguage": {
+        "name": "Shell",
+        "color": "#89e051"
+      },
+      "repositoryTopics": {
+        "nodes": [
+          { "topic": { "name": "bash" } },
+          { "topic": { "name": "shell" } },
+          { "topic": { "name": "automation" } }
+        ]
+      },
+      "url": "https://github.com/humam-hossain/linux_shell_scripting"
+    },
+    "repo_1": {
+      "name": "Python",
+      "owner": {
+        "login": "humam-hossain"
+      },
+      "description": "Python algorithms, utilities, and robotics tools",
+      "stargazerCount": 24,
+      "forkCount": 5,
+      "issues": {
+        "totalCount": 0
+      },
+      "pullRequests": {
+        "totalCount": 2
+      },
+      "primaryLanguage": {
+        "name": "Python",
+        "color": "#3572A5"
+      },
+      "repositoryTopics": {
+        "nodes": [
+          { "topic": { "name": "python" } },
+          { "topic": { "name": "robotics" } }
+        ]
+      },
+      "url": "https://github.com/humam-hossain/Python"
+    },
+    "repo_2": {
+      "name": "nn",
+      "owner": {
+        "login": "humam-hossain"
+      },
+      "description": "C-based neural network framework for matrix operations and gradient learning",
+      "stargazerCount": 8,
+      "forkCount": 1,
+      "issues": {
+        "totalCount": 0
+      },
+      "pullRequests": {
+        "totalCount": 0
+      },
+      "primaryLanguage": {
+        "name": "C",
+        "color": "#555555"
+      },
+      "repositoryTopics": {
+        "nodes": [
+          { "topic": { "name": "c" } },
+          { "topic": { "name": "machine-learning" } }
+        ]
+      },
+      "url": "https://github.com/humam-hossain/nn"
+    },
+    "repo_3": {
+      "name": "antigravity-cli-statusline",
+      "owner": {
+        "login": "humam-hossain"
+      },
+      "description": "Advanced responsive statusline plugin for Antigravity CLI",
+      "stargazerCount": 5,
+      "forkCount": 0,
+      "issues": {
+        "totalCount": 2
+      },
+      "pullRequests": {
+        "totalCount": 1
+      },
+      "primaryLanguage": {
+        "name": "Shell",
+        "color": "#89e051"
+      },
+      "repositoryTopics": {
+        "nodes": [
+          { "topic": { "name": "cli" } },
+          { "topic": { "name": "zsh" } }
+        ]
+      },
+      "url": "https://github.com/humam-hossain/antigravity-cli-statusline"
+    }
+  }
+}

@@ -28,6 +28,11 @@ try:
 except (ImportError, ModuleNotFoundError):
     from generate_hero import generate_svg
 
+try:
+    from scripts.generate_projects import DEFAULT_PROJECT_FIXTURES
+except (ImportError, ModuleNotFoundError):
+    from generate_projects import DEFAULT_PROJECT_FIXTURES
+
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 PROJECTS_CONFIG_PATH = ROOT_DIR / "config" / "projects.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
@@ -395,6 +400,103 @@ def load_curated_projects(config_path: Path) -> list[dict]:
                 "tag": item.get("tag"),
             })
     return normalized
+
+
+def build_batched_projects_query(curated_repos: list[dict]) -> str:
+    """
+    Constructs a consolidated GraphQL query using indexed aliases ('repo_0', 'repo_1').
+    Guarantees syntax safety regardless of repository names (hyphens, dots, underscores).
+    """
+    fragments = []
+    for idx, item in enumerate(curated_repos[:4]):
+        owner = item["owner"]
+        name = item["name"]
+        frag = f"""
+        repo_{idx}: repository(owner: "{owner}", name: "{name}") {{
+          name
+          owner {{ login }}
+          description
+          stargazerCount
+          forkCount
+          issues(states: OPEN) {{ totalCount }}
+          pullRequests(states: OPEN) {{ totalCount }}
+          primaryLanguage {{
+            name
+            color
+          }}
+          repositoryTopics(first: 5) {{
+            nodes {{
+              topic {{ name }}
+            }}
+          }}
+          url
+        }}"""
+        fragments.append(frag)
+
+    return "query GetFeaturedProjects {\n" + "\n".join(fragments) + "\n}"
+
+
+def fetch_project_telemetry(
+    curated_repos: list[dict],
+    cache: dict,
+    token: str | None = None,
+) -> list[dict]:
+    """
+    Fetches project metrics via GraphQL query with indexed aliases.
+    On network or token absence, falls back to cache['project_metrics'].
+    If cache is empty, falls back to static fixtures.
+    """
+    if token and curated_repos:
+        try:
+            query = build_batched_projects_query(curated_repos)
+            res = execute_graphql(query=query, token=token)
+            data = res.get("data", {})
+
+            projects_out = []
+            for idx, c_repo in enumerate(curated_repos[:4]):
+                node = data.get(f"repo_{idx}")
+                if not node:
+                    continue
+
+                lang_obj = node.get("primaryLanguage") or {}
+                topic_nodes = node.get("repositoryTopics", {}).get("nodes", [])
+                topics = [t["topic"]["name"] for t in topic_nodes if t.get("topic")]
+
+                # Fallback description logic (CONTEXT.md D-14)
+                desc = c_repo.get("description") or node.get("description")
+                if not desc:
+                    desc = " ".join(f"#{t}" for t in topics) if topics else "Open-source software repository"
+
+                projects_out.append({
+                    "repo": f"{node.get('owner', {}).get('login', c_repo['owner'])}/{node.get('name', c_repo['name'])}",
+                    "name": c_repo.get("name") or node.get("name"),
+                    "description": desc,
+                    "stars": node.get("stargazerCount", 0),
+                    "forks": node.get("forkCount", 0),
+                    "open_issues": node.get("issues", {}).get("totalCount", 0),
+                    "open_prs": node.get("pullRequests", {}).get("totalCount", 0),
+                    "language": lang_obj.get("name", "Plain Text"),
+                    "language_color": lang_obj.get("color", "#8b949e"),
+                    "topics": topics,
+                    "url": node.get("url") or f"https://github.com/{c_repo['owner']}/{c_repo['name']}",
+                })
+
+            cache["project_metrics"] = {
+                "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "projects": projects_out,
+            }
+            return projects_out
+        except Exception as e:
+            log_warn(f"Failed to fetch project telemetry via GraphQL: {e}. Falling back to cache.")
+
+    # Cache fallback
+    cached_projects = cache.get("project_metrics", {}).get("projects")
+    if cached_projects:
+        return cached_projects
+
+    # Static fixture fallback
+    log_warn("No cached project metrics found. Using default fixtures.")
+    return DEFAULT_PROJECT_FIXTURES
 
 
 def aggregate_loc(config: dict, cache: dict, token: str | None = None) -> tuple[int, int]:
