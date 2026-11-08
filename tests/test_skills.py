@@ -21,6 +21,7 @@ from scripts.generate_skills import (
     load_skills_config,
     write_svg_idempotent,
 )
+from scripts.update_profile import update_readme_skills
 
 
 def test_skills_config_loading(tmp_path):
@@ -160,4 +161,23 @@ def test_skills_idempotent_write(tmp_path):
 
     # Second write with identical content -> False (idempotent skip)
     assert write_svg_idempotent(test_svg_path, content) is False
+
+
+def test_update_readme_skills(tmp_path):
+    """Verify README patching between SKILLS markers and idempotent skip."""
+    mock_readme = tmp_path / "README.md"
+    mock_readme.write_text(
+        "# Profile\n\n<!-- SKILLS:START -->\n<!-- SKILLS:END -->\n\nexit\n",
+        encoding="utf-8",
+    )
+
+    # First run: should patch and return True
+    assert update_readme_skills(mock_readme) is True
+    content = mock_readme.read_text(encoding="utf-8")
+    assert '<img src="./assets/skills.svg"' in content
+    assert 'alt="Categorized Skills Matrix"' in content
+
+    # Second run: content is identical, should return False (idempotent)
+    assert update_readme_skills(mock_readme) is False
+
 

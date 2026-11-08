@@ -37,6 +37,9 @@
 <!-- METRICS:END -->
 
 <!-- SKILLS:START -->
+<div align="center">
+  <img src="./assets/skills.svg" alt="Categorized Skills Matrix" width="100%" />
+</div>
 <!-- SKILLS:END -->
 
 <br />

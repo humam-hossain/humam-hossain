@@ -47,12 +47,19 @@ except (ImportError, ModuleNotFoundError):
         DEFAULT_LANGUAGE_FIXTURES as GEN_DEFAULT_LANG_FIXTURES,
     )
 
+try:
+    from scripts.generate_skills import generate_skills_svg, DEFAULT_SKILLS_DATA
+except (ImportError, ModuleNotFoundError):
+    from generate_skills import generate_skills_svg, DEFAULT_SKILLS_DATA
+
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 PROJECTS_CONFIG_PATH = ROOT_DIR / "config" / "projects.json"
+SKILLS_CONFIG_PATH = ROOT_DIR / "config" / "skills.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
 HERO_SVG_PATH = ROOT_DIR / "assets" / "hero.svg"
 PROJECTS_SVG_PATH = ROOT_DIR / "assets" / "projects.svg"
 METRICS_SVG_PATH = ROOT_DIR / "assets" / "metrics.svg"
+SKILLS_SVG_PATH = ROOT_DIR / "assets" / "skills.svg"
 README_PATH = ROOT_DIR / "README.md"
 GRAPHQL_ENDPOINT = "https://api.github.com/graphql"
 
@@ -1235,6 +1242,55 @@ def update_readme_metrics(readme_path: Path, activity_html: str) -> bool:
     return True
 
 
+def load_skills_config(config_path: Path) -> list[dict]:
+    """Loads config/skills.json with graceful fallback to DEFAULT_SKILLS_DATA."""
+    if not config_path.is_file():
+        log_warn(f"Skills config not found at {config_path}. Using default categories.")
+        return DEFAULT_SKILLS_DATA
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data.get("categories", DEFAULT_SKILLS_DATA)
+            if isinstance(data, list):
+                return data
+    except Exception as e:
+        log_warn(f"Failed to parse {config_path}: {e}. Using default categories.")
+    return DEFAULT_SKILLS_DATA
+
+
+def update_readme_skills(readme_path: Path) -> bool:
+    """Injects skills SVG card between <!-- SKILLS:START --> and <!-- SKILLS:END --> idempotently."""
+    if not readme_path.is_file():
+        log_warn(f"README file not found at {readme_path}")
+        return False
+
+    content = readme_path.read_text(encoding="utf-8")
+    start_tag = "<!-- SKILLS:START -->"
+    end_tag = "<!-- SKILLS:END -->"
+
+    if start_tag not in content or end_tag not in content:
+        log_warn("README.md missing <!-- SKILLS:START --> or <!-- SKILLS:END --> markers.")
+        return False
+
+    start_idx = content.index(start_tag) + len(start_tag)
+    end_idx = content.index(end_tag)
+
+    replacement = """
+<div align="center">
+  <img src="./assets/skills.svg" alt="Categorized Skills Matrix" width="100%" />
+</div>
+"""
+    new_content = content[:start_idx] + "\n" + replacement.strip() + "\n" + content[end_idx:]
+    if new_content == content:
+        log_info("README.md skills section already up to date (idempotent skip)")
+        return False
+
+    readme_path.write_text(new_content, encoding="utf-8")
+    log_ok("Updated README.md with categorized skills matrix")
+    return True
+
+
 def main() -> int:
     """CLI Entry point for profile update engine."""
     log_info("humam@workstation profile updater v1.0.0")
@@ -1280,6 +1336,13 @@ def main() -> int:
     activity_html = format_git_activity_stream(activities)
     update_readme_metrics(README_PATH, activity_html)
     update_readme_badges(README_PATH)
+
+    # 4. Phase 5: Categorized Skills Matrix
+    log_info("Refreshing categorized skills matrix...")
+    skills = load_skills_config(SKILLS_CONFIG_PATH)
+    skills_svg = generate_skills_svg(skills)
+    write_svg_idempotent(SKILLS_SVG_PATH, skills_svg)
+    update_readme_skills(README_PATH)
 
     save_cache(CACHE_PATH, cache)
     log_ok("Profile telemetry refresh complete.")
