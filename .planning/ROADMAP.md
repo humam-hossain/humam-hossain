@@ -135,10 +135,20 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 04-01: Implement top languages calculation and terminal progress bar rendering
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-02: Integrate or generate terminal-themed commit streak stats card
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04-03: Add retro terminal visitor counter badge
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 04-04: Implement recent git activity stream (`git log` style) via GitHub API
 
 ### Phase 5: Skills Matrix & Blog Section
