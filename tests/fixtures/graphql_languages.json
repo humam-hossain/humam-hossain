@@ -1,0 +1,62 @@
+{
+  "data": {
+    "viewer": {
+      "repositories": {
+        "nodes": [
+          {
+            "name": "Python",
+            "isFork": false,
+            "languages": {
+              "edges": [
+                {
+                  "size": 65000,
+                  "node": {
+                    "name": "Python",
+                    "color": "#3572A5"
+                  }
+                },
+                {
+                  "size": 1200,
+                  "node": {
+                    "name": "Markdown",
+                    "color": "#083fa1"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "linux_shell_scripting",
+            "isFork": false,
+            "languages": {
+              "edges": [
+                {
+                  "size": 42000,
+                  "node": {
+                    "name": "Shell",
+                    "color": "#89e051"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "nn",
+            "isFork": false,
+            "languages": {
+              "edges": [
+                {
+                  "size": 18000,
+                  "node": {
+                    "name": "C",
+                    "color": "#555555"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

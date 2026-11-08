@@ -1,0 +1,32 @@
+{
+  "data": {
+    "viewer": {
+      "contributionsCollection": {
+        "contributionCalendar": {
+          "totalContributions": 482,
+          "weeks": [
+            {
+              "contributionDays": [
+                {
+                  "date": "2026-11-06",
+                  "contributionCount": 4,
+                  "color": "#39d353"
+                },
+                {
+                  "date": "2026-11-07",
+                  "contributionCount": 7,
+                  "color": "#26a641"
+                },
+                {
+                  "date": "2026-11-08",
+                  "contributionCount": 2,
+                  "color": "#006d32"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
