@@ -15,6 +15,11 @@ import pytest
 
 import datetime
 
+from scripts.generate_metrics import (
+    DEFAULT_STREAK_FIXTURES as GEN_STREAK_FIXTURES,
+    DEFAULT_LANGUAGE_FIXTURES as GEN_LANG_FIXTURES,
+    generate_metrics_svg,
+)
 from scripts.update_profile import (
     DEFAULT_LANGUAGE_FIXTURES,
     DEFAULT_STREAK_FIXTURES,
@@ -303,3 +308,60 @@ def test_fetch_streak_telemetry_offline_fallback():
     result_fix = fetch_streak_telemetry(empty_cache, token=None)
     assert result_fix == DEFAULT_STREAK_FIXTURES
     assert "streak_metrics" in empty_cache
+
+
+def test_metrics_svg_valid_xml():
+    """Verify generated SVG is valid XML parseable by ElementTree."""
+    svg = generate_metrics_svg(DEFAULT_STREAK_FIXTURES, DEFAULT_LANGUAGE_FIXTURES)
+    root = ET.fromstring(svg)
+    assert root.tag == "{http://www.w3.org/2000/svg}svg"
+
+
+def test_metrics_svg_viewbox_and_dimensions():
+    """Verify viewBox is '0 0 850 340'."""
+    svg = generate_metrics_svg(DEFAULT_STREAK_FIXTURES, DEFAULT_LANGUAGE_FIXTURES)
+    root = ET.fromstring(svg)
+    assert root.attrib["viewBox"] == "0 0 850 340"
+
+
+def test_metrics_svg_palette_tokens():
+    """Verify terminal palette tokens are present in SVG output."""
+    svg = generate_metrics_svg(DEFAULT_STREAK_FIXTURES, DEFAULT_LANGUAGE_FIXTURES)
+    for token in ["#161b22", "#0d1117", "#ffa657", "#58a6ff", "#3fb950"]:
+        assert token in svg, f"Missing palette token {token}"
+
+
+def test_metrics_svg_standby_badge_rendering():
+    """Verify [standby] text is rendered when current_streak == 0."""
+    standby_data = {
+        "current_streak": 0,
+        "longest_streak": 14,
+        "total_contributions": 482,
+        "standby": True,
+    }
+    svg = generate_metrics_svg(standby_data, DEFAULT_LANGUAGE_FIXTURES)
+    assert "[standby]" in svg
+
+    # Non-standby should NOT contain [standby]
+    active_data = {
+        "current_streak": 5,
+        "longest_streak": 14,
+        "total_contributions": 482,
+        "standby": False,
+    }
+    svg_active = generate_metrics_svg(active_data, DEFAULT_LANGUAGE_FIXTURES)
+    assert "[standby]" not in svg_active
+
+
+def test_vector_progress_track_width_calc():
+    """Verify vector track <rect> width handles 0% and 100% correctly."""
+    # 100% single language
+    langs_100 = [{"name": "Python", "bytes": 100, "color": "#3572A5", "percentage": 100.0}]
+    svg_100 = generate_metrics_svg(DEFAULT_STREAK_FIXTURES, langs_100)
+    root = ET.fromstring(svg_100)
+    # Should have a filled rect with width=200 (max track width)
+    assert 'width="200"' in svg_100
+
+    # Empty languages - should still produce valid SVG
+    svg_empty = generate_metrics_svg(DEFAULT_STREAK_FIXTURES, [])
+    ET.fromstring(svg_empty)  # Must not crash

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 340" width="100%" height="100%">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Fira Code", monospace; text-rendering: geometricPrecision; }
+      .title { font-size: 13px; fill: #8b949e; text-anchor: middle; font-weight: 400; }
+      .prompt-cmd { font-size: 13px; }
+      .prompt-user { fill: #58a6ff; font-weight: 600; }
+      .prompt-arg { fill: #c9d1d9; font-weight: 400; }
+      .card-title { font-size: 13px; font-weight: 600; }
+      .card-val { font-size: 22px; font-weight: bold; }
+      .card-unit { font-size: 13px; fill: #8b949e; font-weight: 400; }
+      .lang-name { font-size: 13px; fill: #c9d1d9; font-weight: 500; }
+      .lang-pct { font-size: 12px; fill: #8b949e; font-weight: 400; text-anchor: end; }
+      .sub-header { font-size: 13px; fill: #8b949e; font-weight: 600; }
+      .badge-standby { font-size: 12px; fill: #8b949e; font-weight: 400; }
+    </style>
+  </defs>
+
+  <!-- Terminal Window Frame -->
+  <rect width="850" height="340" rx="10" ry="10" fill="#0d1117" stroke="#30363d" stroke-width="1" />
+
+  <!-- Header Bar -->
+  <rect width="850" height="38" rx="10" ry="10" fill="#161b22" />
+  <rect y="28" width="850" height="10" fill="#161b22" />
+  <line x1="0" y1="38" x2="850" y2="38" stroke="#30363d" stroke-width="1" />
+
+  <!-- Traffic Lights -->
+  <circle cx="25" cy="19" r="6" fill="#ff5f56" />
+  <circle cx="45" cy="19" r="6" fill="#ffbd2e" />
+  <circle cx="65" cy="19" r="6" fill="#27c93f" />
+
+  <!-- Window Title -->
+  <text x="425" y="24" class="mono title">stats — zsh</text>
+
+  <!-- Prompt Line -->
+  <text x="30" y="62" class="mono prompt-cmd">
+    <tspan class="prompt-user">humam@workstation:~$ </tspan>
+    <tspan class="prompt-arg">git status --telemetry</tspan>
+  </text>
+
+  <!-- Left Panel: Streak Cards -->
+  <rect x="30" y="80" width="330" height="70" rx="6" ry="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+  <text x="45" y="102" class="mono card-title" fill="#ffa657">⚡ Current Streak</text>
+  <text x="45" y="132" class="mono card-val" fill="#ffa657">5 <tspan class="card-unit">days</tspan></text>
+  <rect x="30" y="162" width="330" height="70" rx="6" ry="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+  <text x="45" y="184" class="mono card-title" fill="#58a6ff">★ Longest Streak</text>
+  <text x="45" y="214" class="mono card-val" fill="#58a6ff">14 <tspan class="card-unit">days</tspan></text>
+  <rect x="30" y="244" width="330" height="70" rx="6" ry="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+  <text x="45" y="266" class="mono card-title" fill="#3fb950">◆ Total Contributions</text>
+  <text x="45" y="296" class="mono card-val" fill="#3fb950">482 <tspan class="card-unit">events</tspan></text>
+
+  <!-- Right Panel: Languages -->
+  <rect x="380" y="80" width="440" height="234" rx="6" ry="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+  <text x="400" y="105" class="mono sub-header">Top Languages (by volume)</text>
+  <line x1="395" y1="115" x2="805" y2="115" stroke="#30363d" stroke-width="1" />
+  <text x="400" y="140" class="mono lang-name"><tspan fill="#3572A5">● </tspan>Python</text>
+  <rect x="540" y="131" width="200" height="8" rx="3" ry="3" fill="#21262d" />
+  <rect x="540" y="131" width="104" height="8" rx="3" ry="3" fill="#3572A5" />
+  <text x="800" y="140" class="mono lang-pct">52.0%</text>
+  <text x="400" y="168" class="mono lang-name"><tspan fill="#89e051">● </tspan>Shell</text>
+  <rect x="540" y="159" width="200" height="8" rx="3" ry="3" fill="#21262d" />
+  <rect x="540" y="159" width="67" height="8" rx="3" ry="3" fill="#89e051" />
+  <text x="800" y="168" class="mono lang-pct">33.6%</text>
+  <text x="400" y="196" class="mono lang-name"><tspan fill="#555555">● </tspan>C</text>
+  <rect x="540" y="187" width="200" height="8" rx="3" ry="3" fill="#21262d" />
+  <rect x="540" y="187" width="28" height="8" rx="3" ry="3" fill="#555555" />
+  <text x="800" y="196" class="mono lang-pct">14.4%</text>
+</svg>
