@@ -11,10 +11,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from unittest.mock import patch
+import xml.etree.ElementTree as ET
 
 import pytest
 
-from scripts.generate_projects import DEFAULT_PROJECT_FIXTURES
+from scripts.generate_projects import (
+    DEFAULT_PROJECT_FIXTURES,
+    GRID_SLOTS,
+    OCTICONS,
+    generate_projects_svg,
+    wrap_and_clamp_description,
+)
 from scripts.update_profile import (
     PROJECTS_CONFIG_PATH,
     build_batched_projects_query,
@@ -241,3 +248,100 @@ def test_offline_fallback_when_unauthenticated():
     cache = {"project_metrics": {"projects": cached_data}}
     res_cached = fetch_project_telemetry([], cache, token=None)
     assert res_cached == cached_data
+
+
+def test_description_clamping_and_escaping():
+    """Verify word wrapping at 42/40 characters, ellipsis, and XML entity escaping."""
+    # 1. Short text
+    l1, l2 = wrap_and_clamp_description("Short text")
+    assert l1 == "Short text"
+    assert l2 == ""
+
+    # 2. Text with XML entities (e.g. &)
+    l1_ent, l2_ent = wrap_and_clamp_description("Robotics & AI Framework tools for autonomous vehicles")
+    assert "&amp;" in l1_ent
+    # Verify no broken entities like &am...
+    assert "&am" not in l1_ent.replace("&amp;", "")
+
+    # 3. Very long text requiring 2 lines and ellipsis truncation
+    long_text = (
+        "This is an extremely detailed and exceptionally lengthy project description "
+        "designed specifically to test the two-line word wrapping and ellipsis truncation "
+        "algorithm in the terminal SVG generator."
+    )
+    l1_long, l2_long = wrap_and_clamp_description(long_text, max_line1=42, max_line2=40)
+    assert len(l1_long) <= 50  # Allows for safe entities
+    assert l2_long.endswith("...")
+
+
+def test_projects_svg_xml_validity():
+    """Verify generated SVG parses cleanly with ElementTree and has viewBox 0 0 850 340."""
+    svg_str = generate_projects_svg(DEFAULT_PROJECT_FIXTURES)
+    root = ET.fromstring(svg_str)
+
+    assert root.tag == "{http://www.w3.org/2000/svg}svg"
+    assert root.attrib.get("viewBox") == "0 0 850 340"
+    assert root.attrib.get("width") == "100%"
+    assert root.attrib.get("height") == "100%"
+
+
+def test_projects_svg_chrome_and_tokens():
+    """Verify workstation header bar, traffic lights, window title, and prompt command."""
+    svg_str = generate_projects_svg(DEFAULT_PROJECT_FIXTURES)
+
+    # Traffic lights
+    assert 'fill="#ff5f56"' in svg_str  # Close
+    assert 'fill="#ffbd2e"' in svg_str  # Minimize
+    assert 'fill="#27c93f"' in svg_str  # Zoom
+
+    # Window title
+    assert "projects — zsh" in svg_str
+
+    # CLI Prompt line
+    assert "humam@workstation:~/projects$" in svg_str
+    assert "gh repo list" in svg_str
+
+
+def test_subpanel_grid_positions():
+    """Verify subpanels are rendered at exact (30,80), (440,80), (30,207), (440,207) coordinates."""
+    svg_str = generate_projects_svg(DEFAULT_PROJECT_FIXTURES)
+
+    for gx, gy in GRID_SLOTS:
+        pattern = f'x="{gx}" y="{gy}" width="380" height="115"'
+        assert pattern in svg_str, f"Missing subpanel at ({gx}, {gy})"
+
+
+def test_zero_count_muted_rendering():
+    """Verify metric counters use ANSI accent for > 0 and muted #616e7f for == 0."""
+    sample_projects = [
+        {
+            "name": "sample-repo",
+            "repo": "humam-hossain/sample-repo",
+            "description": "Test repo",
+            "stars": 15,
+            "forks": 0,
+            "open_issues": 3,
+            "open_prs": 0,
+            "language": "Python",
+            "language_color": "#3572A5",
+        }
+    ]
+    svg_str = generate_projects_svg(sample_projects)
+
+    # Star > 0 -> #f1e05a
+    assert 'fill="#f1e05a"' in svg_str
+    # Issue > 0 -> #ffa657
+    assert 'fill="#ffa657"' in svg_str
+    # Fork == 0 and PR == 0 -> #616e7f
+    assert 'fill="#616e7f"' in svg_str
+
+
+def test_partial_grid_slots():
+    """Verify empty grid slots render dashed border and [ available slot ] placeholder."""
+    two_projects = DEFAULT_PROJECT_FIXTURES[:2]
+    svg_str = generate_projects_svg(two_projects)
+
+    # 2 empty slots -> 2 dashed rectangles
+    assert svg_str.count('stroke-dasharray="4,4"') == 2
+    assert svg_str.count("[ available slot ]") == 2
+
