@@ -29,14 +29,16 @@ except (ImportError, ModuleNotFoundError):
     from generate_hero import generate_svg
 
 try:
-    from scripts.generate_projects import DEFAULT_PROJECT_FIXTURES
+    from scripts.generate_projects import generate_projects_svg, DEFAULT_PROJECT_FIXTURES
 except (ImportError, ModuleNotFoundError):
-    from generate_projects import DEFAULT_PROJECT_FIXTURES
+    from generate_projects import generate_projects_svg, DEFAULT_PROJECT_FIXTURES
 
 CONFIG_PATH = ROOT_DIR / "config" / "terminal_theme.json"
 PROJECTS_CONFIG_PATH = ROOT_DIR / "config" / "projects.json"
 CACHE_PATH = ROOT_DIR / "data" / "cache.json"
 HERO_SVG_PATH = ROOT_DIR / "assets" / "hero.svg"
+PROJECTS_SVG_PATH = ROOT_DIR / "assets" / "projects.svg"
+README_PATH = ROOT_DIR / "README.md"
 GRAPHQL_ENDPOINT = "https://api.github.com/graphql"
 
 # ANSI escape codes matching workstation palette
@@ -347,6 +349,10 @@ def load_cache(cache_path: Path) -> dict:
             "deletions": 85240,
             "last_updated": "2026-11-07T14:00:00Z",
         },
+        "project_metrics": {
+            "last_updated": "2026-11-07T17:48:25Z",
+            "projects": [],
+        },
     }
 
 
@@ -497,6 +503,10 @@ def fetch_project_telemetry(
 
     # Static fixture fallback
     log_warn("No cached project metrics found. Using default fixtures.")
+    cache["project_metrics"] = {
+        "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "projects": DEFAULT_PROJECT_FIXTURES,
+    }
     return DEFAULT_PROJECT_FIXTURES
 
 
@@ -666,6 +676,52 @@ def write_svg_idempotent(output_path: Path, new_content: str) -> bool:
     return True
 
 
+def update_readme_projects(readme_path: Path, projects: list[dict]) -> bool:
+    """
+    Injects projects SVG and terminal quick-links between <!-- PROJECTS:START -->
+    and <!-- PROJECTS:END --> tags idempotently.
+    """
+    if not readme_path.is_file():
+        log_warn(f"README file not found at {readme_path}")
+        return False
+
+    content = readme_path.read_text(encoding="utf-8")
+    start_tag = "<!-- PROJECTS:START -->"
+    end_tag = "<!-- PROJECTS:END -->"
+
+    if start_tag not in content or end_tag not in content:
+        log_warn("README.md missing <!-- PROJECTS:START --> or <!-- PROJECTS:END --> markers.")
+        return False
+
+    start_idx = content.index(start_tag) + len(start_tag)
+    end_idx = content.index(end_tag)
+
+    links = []
+    for p in projects[:4]:
+        name = p.get("name") or (p.get("repo", "").split("/")[-1] if p.get("repo") else "repo")
+        url = p.get("url") or f"https://github.com/{p.get('repo')}"
+        links.append(f'cd <a href="{url}">{name}</a>')
+
+    links_cmd = " | ".join(links)
+    replacement = f"""
+<div align="center">
+  <img src="./assets/projects.svg" alt="Open Source Projects Dashboard" width="100%" />
+</div>
+
+<div align="center">
+  <code>humam@workstation:~/projects$ {links_cmd}</code>
+</div>
+"""
+    new_content = content[:start_idx] + "\n" + replacement.strip() + "\n" + content[end_idx:]
+    if new_content == content:
+        log_info("README.md projects section already up to date (idempotent skip)")
+        return False
+
+    readme_path.write_text(new_content, encoding="utf-8")
+    log_ok("Updated README.md with projects dashboard")
+    return True
+
+
 def main() -> int:
     """CLI Entry point for profile update engine."""
     log_info("humam@workstation profile updater v1.0.0")
@@ -689,8 +745,16 @@ def main() -> int:
     add_str, del_str = format_loc_counts(adds, dels)
     log_info(f"Aggregate LOC: {add_str} / {del_str}")
 
-    svg_content = generate_svg(uptime=uptime_str, loc_add=add_str, loc_del=del_str)
-    write_svg_idempotent(HERO_SVG_PATH, svg_content)
+    hero_svg_content = generate_svg(uptime=uptime_str, loc_add=add_str, loc_del=del_str)
+    write_svg_idempotent(HERO_SVG_PATH, hero_svg_content)
+
+    # 2. Phase 3: Projects Dashboard telemetry
+    log_info("Refreshing open source projects dashboard telemetry...")
+    curated = load_curated_projects(PROJECTS_CONFIG_PATH)
+    projects_data = fetch_project_telemetry(curated, cache, token)
+    projects_svg = generate_projects_svg(projects_data)
+    write_svg_idempotent(PROJECTS_SVG_PATH, projects_svg)
+    update_readme_projects(README_PATH, projects_data)
 
     save_cache(CACHE_PATH, cache)
     log_ok("Profile telemetry refresh complete.")
