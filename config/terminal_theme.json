@@ -87,6 +87,12 @@
   },
   "telemetry": {
     "exclude_repos": [],
-    "baseline_override_date": null
+    "baseline_override_date": null,
+    "ignore_languages": [
+      "HTML",
+      "CSS",
+      "TeX",
+      "Markdown"
+    ]
   }
 }

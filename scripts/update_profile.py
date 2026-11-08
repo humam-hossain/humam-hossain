@@ -510,6 +510,129 @@ def fetch_project_telemetry(
     return DEFAULT_PROJECT_FIXTURES
 
 
+DEFAULT_LANGUAGE_FIXTURES = [
+    {"name": "Python", "bytes": 65000, "color": "#3572A5", "percentage": 52.0},
+    {"name": "Shell", "bytes": 42000, "color": "#89e051", "percentage": 33.6},
+    {"name": "C", "bytes": 18000, "color": "#555555", "percentage": 14.4},
+]
+
+
+def aggregate_top_languages(
+    repo_nodes: list[dict],
+    ignore_list: list[str] | None = None,
+) -> list[dict]:
+    """
+    Aggregates language byte counts across repositories, filters ignored languages,
+    and returns top 5 languages + aggregated 'Other' row if remainder >= 1%.
+    """
+    ignore_set = set(ignore_list if ignore_list is not None else ["HTML", "CSS", "TeX", "Markdown"])
+    lang_bytes: dict[str, int] = {}
+    lang_colors: dict[str, str] = {}
+
+    for repo in repo_nodes:
+        if repo.get("isFork"):
+            continue
+        lang_conn = repo.get("languages", {})
+        edges = lang_conn.get("edges", [])
+        for edge in edges:
+            node = edge.get("node", {})
+            name = node.get("name")
+            size = edge.get("size", 0)
+            color = node.get("color") or "#8b949e"
+
+            if not name or name in ignore_set:
+                continue
+
+            lang_bytes[name] = lang_bytes.get(name, 0) + size
+            lang_colors[name] = color
+
+    total_bytes = sum(lang_bytes.values())
+    if total_bytes == 0:
+        return []
+
+    sorted_langs = sorted(lang_bytes.items(), key=lambda x: x[1], reverse=True)
+    top_5 = sorted_langs[:5]
+    remainder = sorted_langs[5:]
+    remainder_bytes = sum(b for _, b in remainder)
+
+    result = []
+    for name, b in top_5:
+        pct = (b / total_bytes) * 100.0
+        result.append({
+            "name": name,
+            "bytes": b,
+            "color": lang_colors.get(name, "#8b949e"),
+            "percentage": round(pct, 1),
+        })
+
+    if remainder_bytes > 0:
+        rem_pct = (remainder_bytes / total_bytes) * 100.0
+        if rem_pct >= 1.0:
+            result.append({
+                "name": "Other",
+                "bytes": remainder_bytes,
+                "color": "#8b949e",
+                "percentage": round(rem_pct, 1),
+            })
+
+    return result
+
+
+def fetch_language_telemetry(config: dict, cache: dict, token: str | None = None) -> list[dict]:
+    """
+    Tier 1: Live GraphQL query to viewer.repositories.nodes.languages
+    Tier 2: Cache fallback from cache['top_languages']
+    Tier 3: DEFAULT_LANGUAGE_FIXTURES
+    """
+    ignore_list = config.get("telemetry", {}).get("ignore_languages")
+    if token:
+        try:
+            query = """
+            query GetTopLanguages {
+              viewer {
+                repositories(first: 100, isFork: false) {
+                  nodes {
+                    name
+                    isFork
+                    languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+                      edges {
+                        size
+                        node {
+                          name
+                          color
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """
+            data = execute_graphql(query, token=token)
+            nodes = data.get("data", {}).get("viewer", {}).get("repositories", {}).get("nodes", [])
+            languages = aggregate_top_languages(nodes, ignore_list=ignore_list)
+            if languages:
+                cache["top_languages"] = {
+                    "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "languages": languages,
+                }
+                return languages
+        except Exception as e:
+            log_warn(f"Failed to fetch language telemetry via GraphQL: {e}. Falling back to cache.")
+
+    cached = cache.get("top_languages", {}).get("languages")
+    if cached:
+        log_info("Using cached language telemetry from data/cache.json")
+        return cached
+
+    log_warn("No cached language telemetry found. Using default fixtures.")
+    cache["top_languages"] = {
+        "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "languages": DEFAULT_LANGUAGE_FIXTURES,
+    }
+    return DEFAULT_LANGUAGE_FIXTURES
+
+
 def aggregate_loc(config: dict, cache: dict, token: str | None = None) -> tuple[int, int]:
     """
     Enumerates owned non-fork repositories and aggregates LOC (additions, deletions).

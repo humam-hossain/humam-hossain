@@ -13,6 +13,12 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from scripts.update_profile import (
+    DEFAULT_LANGUAGE_FIXTURES,
+    aggregate_top_languages,
+    fetch_language_telemetry,
+)
+
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
 
@@ -72,3 +78,139 @@ def test_fixtures_events_valid_json():
         assert "repo" in event
         assert "payload" in event
         assert "commits" in event["payload"]
+
+
+def test_language_aggregation_percentages():
+    """Verify aggregate_top_languages accurately calculates percentages on fixture data."""
+    fixture_path = FIXTURES_DIR / "graphql_languages.json"
+    with open(fixture_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    nodes = data["data"]["viewer"]["repositories"]["nodes"]
+
+    languages = aggregate_top_languages(nodes)
+    assert len(languages) == 3
+    names = [l["name"] for l in languages]
+    assert names == ["Python", "Shell", "C"]
+
+    # Verify Markdown was excluded
+    assert "Markdown" not in names
+
+    # Percentages check: 65k / 125k = 52.0%, 42k / 125k = 33.6%, 18k / 125k = 14.4%
+    total_pct = sum(l["percentage"] for l in languages)
+    assert pytest.approx(total_pct, 0.1) == 100.0
+    assert languages[0]["percentage"] == 52.0
+    assert languages[1]["percentage"] == 33.6
+    assert languages[2]["percentage"] == 14.4
+
+
+def test_language_ignore_list_filtering():
+    """Verify that ignored languages (HTML, CSS, TeX, Markdown) are filtered out."""
+    nodes = [
+        {
+            "name": "web-app",
+            "isFork": False,
+            "languages": {
+                "edges": [
+                    {"size": 10000, "node": {"name": "JavaScript", "color": "#f1e05a"}},
+                    {"size": 8000, "node": {"name": "HTML", "color": "#e34c26"}},
+                    {"size": 6000, "node": {"name": "CSS", "color": "#563d7c"}},
+                    {"size": 4000, "node": {"name": "TeX", "color": "#3D6117"}},
+                    {"size": 2000, "node": {"name": "Markdown", "color": "#083fa1"}},
+                ]
+            },
+        }
+    ]
+
+    languages = aggregate_top_languages(nodes, ignore_list=["HTML", "CSS", "TeX", "Markdown"])
+    assert len(languages) == 1
+    assert languages[0]["name"] == "JavaScript"
+    assert languages[0]["percentage"] == 100.0
+
+
+def test_language_other_row_roll_up():
+    """Verify that languages beyond top 5 roll up into 'Other' if remainder >= 1%."""
+    nodes = [
+        {
+            "name": "multi-lang-repo",
+            "isFork": False,
+            "languages": {
+                "edges": [
+                    {"size": 50000, "node": {"name": "Lang1", "color": "#111111"}},
+                    {"size": 20000, "node": {"name": "Lang2", "color": "#222222"}},
+                    {"size": 15000, "node": {"name": "Lang3", "color": "#333333"}},
+                    {"size": 10000, "node": {"name": "Lang4", "color": "#444444"}},
+                    {"size": 5000, "node": {"name": "Lang5", "color": "#555555"}},
+                    {"size": 3000, "node": {"name": "Lang6", "color": "#666666"}},
+                    {"size": 2000, "node": {"name": "Lang7", "color": "#777777"}},
+                ]
+            },
+        }
+    ]
+
+    # Total: 105,000 bytes. Top 5: 100,000. Remainder: 5,000 (~4.8%).
+    languages = aggregate_top_languages(nodes, ignore_list=[])
+    assert len(languages) == 6
+    assert [l["name"] for l in languages[:5]] == ["Lang1", "Lang2", "Lang3", "Lang4", "Lang5"]
+    assert languages[5]["name"] == "Other"
+    assert languages[5]["color"] == "#8b949e"
+    assert languages[5]["percentage"] == 4.8
+
+    # Case where remainder < 1%: 100,000 + 100 bytes -> remainder is < 0.1%
+    nodes_small_rem = [
+        {
+            "name": "small-rem-repo",
+            "isFork": False,
+            "languages": {
+                "edges": [
+                    {"size": 50000, "node": {"name": "Lang1", "color": "#111111"}},
+                    {"size": 20000, "node": {"name": "Lang2", "color": "#222222"}},
+                    {"size": 15000, "node": {"name": "Lang3", "color": "#333333"}},
+                    {"size": 10000, "node": {"name": "Lang4", "color": "#444444"}},
+                    {"size": 5000, "node": {"name": "Lang5", "color": "#555555"}},
+                    {"size": 50, "node": {"name": "Lang6", "color": "#666666"}},
+                ]
+            },
+        }
+    ]
+    languages_no_other = aggregate_top_languages(nodes_small_rem, ignore_list=[])
+    assert len(languages_no_other) == 5
+    assert "Other" not in [l["name"] for l in languages_no_other]
+
+
+def test_language_zero_bytes_safety():
+    """Verify empty nodes or 0-byte repositories return empty list without ZeroDivisionError."""
+    assert aggregate_top_languages([]) == []
+    empty_nodes = [
+        {"name": "fork-repo", "isFork": True, "languages": {"edges": [{"size": 1000, "node": {"name": "Python"}}]}},
+        {"name": "empty-repo", "isFork": False, "languages": {"edges": []}},
+    ]
+    assert aggregate_top_languages(empty_nodes) == []
+
+
+def test_fetch_language_telemetry_cache_fallback():
+    """Verify fetch_language_telemetry fallback behavior across tiers."""
+    config = {"telemetry": {"ignore_languages": ["HTML", "CSS", "TeX", "Markdown"]}}
+
+    # 1. Tier 2: Cache hit
+    cache_with_langs = {
+        "top_languages": {
+            "last_updated": "2026-11-08T00:00:00Z",
+            "languages": [{"name": "Python", "bytes": 1000, "color": "#3572A5", "percentage": 100.0}],
+        }
+    }
+    result = fetch_language_telemetry(config, cache_with_langs, token=None)
+    assert len(result) == 1
+    assert result[0]["name"] == "Python"
+
+    # 2. Tier 3: Fixture fallback
+    empty_cache = {}
+    result_fixtures = fetch_language_telemetry(config, empty_cache, token=None)
+    assert result_fixtures == DEFAULT_LANGUAGE_FIXTURES
+    assert "top_languages" in empty_cache
+
+    # 3. Network error fallback
+    with patch("scripts.update_profile.execute_graphql", side_effect=RuntimeError("API error")):
+        error_cache = {}
+        result_err = fetch_language_telemetry(config, error_cache, token="fake_token")
+        assert result_err == DEFAULT_LANGUAGE_FIXTURES
+
