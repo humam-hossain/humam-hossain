@@ -23,6 +23,7 @@ from scripts.update_profile import (
     load_articles_config,
     normalize_date_string,
     parse_feed_xml,
+    update_readme_blog,
 )
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -192,4 +193,30 @@ def test_standby_formatting():
     """Verify standby message formatting when article list is empty."""
     output = format_articles_terminal_log([])
     assert "* [standby] feed listener active — configure rss_url in config/articles.json" in output
+
+
+def test_readme_blog_injection(tmp_path):
+    """Verify idempotent README injection between <!-- BLOG:START --> and <!-- BLOG:END -->."""
+    mock_readme = tmp_path / "README.md"
+    original = (
+        "# Profile\n\n"
+        "<!-- SKILLS:END -->\n\n"
+        "<code>humam@workstation:~$ exit</code>\n"
+    )
+    mock_readme.write_text(original, encoding="utf-8")
+    mock_html = "<pre><code>humam@workstation:~$ cat ~/articles.log\n* [2024-05-19] Test Post</code></pre>"
+
+    # 1. First injection auto-creates markers and updates
+    res1 = update_readme_blog(mock_readme, mock_html)
+    assert res1 is True
+
+    content = mock_readme.read_text(encoding="utf-8")
+    assert "<!-- BLOG:START -->" in content
+    assert "<!-- BLOG:END -->" in content
+    assert "* [2024-05-19] Test Post" in content
+
+    # 2. Idempotent second injection
+    res2 = update_readme_blog(mock_readme, mock_html)
+    assert res2 is False
+
 

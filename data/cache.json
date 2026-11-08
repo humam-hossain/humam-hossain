@@ -19,7 +19,7 @@
   "totals": {
     "additions": 55543,
     "deletions": 656,
-    "last_updated": "2026-11-08T08:42:47Z"
+    "last_updated": "2026-11-08T16:24:39Z"
   },
   "project_metrics": {
     "last_updated": "2026-11-08T03:29:48Z",
@@ -150,6 +150,29 @@
         "time_ago": "1 week ago",
         "url": "https://github.com/humam-hossain/nn/commit/b7c8d9e",
         "repo_url": "https://github.com/humam-hossain/nn"
+      }
+    ]
+  },
+  "articles": {
+    "last_updated": "2026-11-08T16:23:46Z",
+    "items": [
+      {
+        "title": "Autonomous Rover Navigation with ROS2 and PyBullet",
+        "url": "https://github.com/humam-hossain",
+        "date": "2024-04-15",
+        "platform": "Project Note"
+      },
+      {
+        "title": "Continuous Test Automation Architecture for Linux Embedded Systems",
+        "url": "https://github.com/humam-hossain",
+        "date": "2024-02-10",
+        "platform": "Whitepaper"
+      },
+      {
+        "title": "NASA Astrobee kRPC Autonomous Docking Guidance System",
+        "url": "https://github.com/humam-hossain",
+        "date": "2023-11-20",
+        "platform": "JAXA Competition"
       }
     ]
   }

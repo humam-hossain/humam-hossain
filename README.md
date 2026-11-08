@@ -42,6 +42,16 @@
 </div>
 <!-- SKILLS:END -->
 
+<!-- BLOG:START -->
+<div align="left">
+<pre><code>humam@workstation:~$ cat ~/articles.log
+* [2024-04-15] <a href="https://github.com/humam-hossain">Autonomous Rover Navigation with ROS2 and PyBullet</a> (Project Note)
+* [2024-02-10] <a href="https://github.com/humam-hossain">Continuous Test Automation Architecture for Linux Em...</a> (Whitepaper)
+* [2023-11-20] <a href="https://github.com/humam-hossain">NASA Astrobee kRPC Autonomous Docking Guidance System</a> (JAXA Competition)
+</code></pre>
+</div>
+<!-- BLOG:END -->
+
 <br />
 
 <div align="center">

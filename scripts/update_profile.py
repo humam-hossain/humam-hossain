@@ -1496,6 +1496,43 @@ def update_readme_skills(readme_path: Path) -> bool:
     return True
 
 
+def update_readme_blog(readme_path: Path, blog_html: str) -> bool:
+    """
+    Injects terminal articles log between <!-- BLOG:START --> and <!-- BLOG:END --> idempotently.
+    Automatically inserts markers directly below <!-- SKILLS:END --> if missing.
+    """
+    if not readme_path.is_file():
+        log_warn(f"README file not found at {readme_path}")
+        return False
+
+    content = readme_path.read_text(encoding="utf-8")
+    start_tag = "<!-- BLOG:START -->"
+    end_tag = "<!-- BLOG:END -->"
+
+    # Auto-insert markers if not present
+    if start_tag not in content or end_tag not in content:
+        skills_end = "<!-- SKILLS:END -->"
+        if skills_end in content:
+            idx = content.index(skills_end) + len(skills_end)
+            marker_block = "\n\n<!-- BLOG:START -->\n<!-- BLOG:END -->"
+            content = content[:idx] + marker_block + content[idx:]
+        else:
+            log_warn("README.md missing <!-- SKILLS:END --> marker; cannot position blog section.")
+            return False
+
+    start_idx = content.index(start_tag) + len(start_tag)
+    end_idx = content.index(end_tag)
+
+    new_content = content[:start_idx] + "\n" + blog_html.strip() + "\n" + content[end_idx:]
+    if new_content == content:
+        log_info("README.md blog section already up to date (idempotent skip)")
+        return False
+
+    readme_path.write_text(new_content, encoding="utf-8")
+    log_ok("Updated README.md with publications and articles log")
+    return True
+
+
 def main() -> int:
     """CLI Entry point for profile update engine."""
     log_info("humam@workstation profile updater v1.0.0")
@@ -1548,6 +1585,14 @@ def main() -> int:
     skills_svg = generate_skills_svg(skills)
     write_svg_idempotent(SKILLS_SVG_PATH, skills_svg)
     update_readme_skills(README_PATH)
+
+    # 5. Phase 5: Blog & Publications Section
+    log_info("Refreshing blog & publications section...")
+    force_refresh = "--refresh" in sys.argv
+    articles_config = load_articles_config(ARTICLES_CONFIG_PATH)
+    articles = fetch_articles(articles_config, cache, force_refresh=force_refresh)
+    blog_html = format_articles_terminal_log(articles, max_display=articles_config.get("max_display", 4))
+    update_readme_blog(README_PATH, blog_html)
 
     save_cache(CACHE_PATH, cache)
     log_ok("Profile telemetry refresh complete.")
