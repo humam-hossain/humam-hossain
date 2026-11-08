@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-07)
+See: .planning/PROJECT.md (updated 2026-11-09)
 
 **Core value:** Every profile component must strictly adhere to the unified terminal design language while keeping all live metrics automatically refreshed via free GitHub Actions.
-**Current focus:** Phase 05 — Skills Matrix & Blog Section
+**Current focus:** Phase 06 — GitHub Actions Automation
 
 ## Current Position
 
@@ -85,6 +85,10 @@ Recent decisions affecting current work:
 - [Phase 01]: Centralized design tokens in config/terminal_theme.json as single source of truth
 - [Phase 01]: Standard library only for scripts/generate_hero.py with ElementTree validation
 - [Phase 01]: Reserved DOM update hooks val-uptime, val-loc-add, val-loc-del for Phase 2 dynamic patching
+- [Phase 05]: Curated 4 technical disciplines (AI & Data Science, Backend & Systems, SQA & Automation, Embedded & Robotics) with ANSI accents seeded from authentic CV
+- [Phase 05]: Flow-pack monospaced pill layout with strict 6-skill capacity cap per quadrant preventing SVG boundary overflow
+- [Phase 05]: Multi-tier article fallback cascade (Live RSS/Atom feed -> 12h Cache -> Curated articles -> Standby message) guaranteeing 0% CI failure risk
+- [Phase 05]: URL protocol validation (requiring http/https or fallback to #) and HTML tag stripping for terminal log box injection
 
 ### Pending Todos
 
@@ -102,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-08T16:28:50.158Z
+Last session: 2026-11-09
 Stopped at: Phase 05 complete, ready to plan Phase 6
 Resume file: None

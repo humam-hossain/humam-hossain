@@ -15,19 +15,19 @@ Every single profile component must strictly adhere to the same unified terminal
 - ✓ Modular LaTeX CV generation pipeline with automated compilation scripts — existing (`cv/`)
 - ✓ Next.js static portfolio foundation and component assets — existing (`src/`, `public/`)
 - ✓ SVG terminal Hero Card with `H_` stylized ASCII monogram, 8-dot ANSI strip, `humam@workstation` telemetry, and Shields.io terminal contact badges — Phase 1
+- ✓ Automated "Coding Uptime" calculation from first commit and aggregate Lines of Code (LOC) counter — Phase 2
+- ✓ Live Open Source Projects Dashboard displaying real-time Stars, Forks, Issues, and PR counts with configurable repo selection — Phase 3
+- ✓ Top Languages distribution widget formatted as horizontal vector tracks — Phase 4
+- ✓ Commit Streak & Contribution Stats card customized strictly to match terminal palette — Phase 4
+- ✓ Retro terminal session hits / visitor counter badge — Phase 4
+- ✓ Recent Git activity stream formatted as `git log --graph --oneline` with automated bot filtering — Phase 4
+- ✓ Terminal-themed categorized skills matrix (AI & Data Science, Backend & Systems, SQA & Automation, Embedded & Robotics) with flow-pack pills — Phase 5
+- ✓ Plug-and-play blog / article section (`cat ~/articles.log`) with RSS 2.0 / Atom 1.0 parsing, 12h caching, and fallback cascade — Phase 5
 
 ### Active
 
-- [ ] Automated "Coding Uptime" calculation derived from timestamp of first GitHub commit to present
-- [ ] Dynamic Lines of Code (LOC) counter tracking aggregate repository additions (`++`) and deletions (`--`)
-- [ ] Live Open Source Projects Dashboard displaying real-time Stars, Forks, Issues, and PR counts in a terminal box format
-- [ ] Configurable repository selection for featured projects with automatic fallback to top active repos
-- [ ] Top Languages distribution widget formatted as an ASCII/terminal horizontal progress bar
-- [ ] Commit Streak and Contribution Stats card customized strictly to match terminal palette (`#161b22`, amber, green)
-- [ ] Retro terminal session hits / visitor counter badge
-- [ ] Recent Git activity stream formatted as `git log --graph --oneline`
-- [ ] Plug-and-play blog post / publication section driven by RSS/markdown automation
-- [ ] Scheduled GitHub Actions workflow (`.github/workflows/profile-updater.yml`) running daily with zero cost on GitHub's free public runner tier
+- [ ] Scheduled GitHub Actions workflow (`.github/workflows/profile-updater.yml`) running daily with zero cost on GitHub's free public runner tier (Phase 6)
+- [ ] Automated git commit and push step within the workflow running under standard `GITHUB_TOKEN` permissions with zero hosting cost (Phase 6)
 
 ### Out of Scope
 
@@ -55,10 +55,12 @@ Every single profile component must strictly adhere to the same unified terminal
 |----------|-----------|---------|
 | Strict Terminal Design System | Prevents disjointed appearance typical of profiles mixing random third-party cards; enforces cohesive professional identity | ✓ Shipped in Phase 1 (config/terminal_theme.json, docs/DESIGN_SYSTEM.md) |
 | Deterministic Standard Library Generator | Pure Python stdlib (xml.sax, xml.etree) guarantees zero external dependencies and fast GitHub Actions runtime | ✓ Shipped in Phase 1 (scripts/generate_hero.py) |
-| First-Commit Coding Uptime | Personalizes uptime telemetry to reflect real GitHub engineering history rather than arbitrary biological age | — Pending |
-| Dual SVG + GitHub Actions Architecture | Ensures fast profile load times without client-side lag or rate limits, while maintaining automated daily freshness | — Pending |
-| Pinned + Dynamic Project Metrics | Allows highlighting key competition/portfolio repos while keeping live star, fork, issue, and PR stats accurate | — Pending |
-| Exclude GitHub Trophies | User explicitly specified no trophies to maintain clean, technical minimalism | — Pending |
+| First-Commit Coding Uptime | Personalizes uptime telemetry to reflect real GitHub engineering history rather than arbitrary biological age | ✓ Shipped in Phase 2 (scripts/update_profile.py) |
+| Dual SVG + GitHub Actions Architecture | Ensures fast profile load times without client-side lag or rate limits, while maintaining automated daily freshness | ✓ Shipped in Phase 1-5, automation in Phase 6 |
+| Pinned + Dynamic Project Metrics | Allows highlighting key competition/portfolio repos while keeping live star, fork, issue, and PR stats accurate | ✓ Shipped in Phase 3 (assets/projects.svg) |
+| Exclude GitHub Trophies | User explicitly specified no trophies to maintain clean, technical minimalism | ✓ Enforced |
+| Flow-Pack Monospace Skills Layout | monospaced width math (`32 + len * 6.8`) with 6-skill capacity cap guarantees zero boundary overflow | ✓ Shipped in Phase 5 (assets/skills.svg) |
+| Multi-Layer Article Fallback Cascade | Live feed -> Cache (12h TTL) -> Curated articles -> Standby message guarantees zero CI failure risk | ✓ Shipped in Phase 5 (scripts/update_profile.py) |
 
 ## Evolution
 
@@ -78,4 +80,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-07 after Phase 1*
+*Last updated: 2026-11-09 after Phase 5*
