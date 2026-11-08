@@ -23,10 +23,15 @@ from scripts.generate_projects import (
     wrap_and_clamp_description,
 )
 from scripts.update_profile import (
+    CACHE_PATH,
     PROJECTS_CONFIG_PATH,
     build_batched_projects_query,
     fetch_project_telemetry,
+    load_cache,
     load_curated_projects,
+    main,
+    save_cache,
+    update_readme_projects,
 )
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -344,4 +349,84 @@ def test_partial_grid_slots():
     # 2 empty slots -> 2 dashed rectangles
     assert svg_str.count('stroke-dasharray="4,4"') == 2
     assert svg_str.count("[ available slot ]") == 2
+
+
+def test_readme_injection_and_idempotence(tmp_path):
+    """Verify surgical injection into README between markers and idempotent second run."""
+    mock_readme = tmp_path / "README.md"
+    original_content = (
+        "# User Profile\n\n"
+        "<!-- PROJECTS:START -->\n"
+        "<!-- PROJECTS:END -->\n\n"
+        "Footer note\n"
+    )
+    mock_readme.write_text(original_content, encoding="utf-8")
+
+    # 1. First injection
+    res1 = update_readme_projects(mock_readme, DEFAULT_PROJECT_FIXTURES)
+    assert res1 is True
+
+    updated_content = mock_readme.read_text(encoding="utf-8")
+    assert '<img src="./assets/projects.svg"' in updated_content
+    assert "<code>humam@workstation:~/projects$ cd" in updated_content
+    assert "# User Profile" in updated_content
+    assert "Footer note" in updated_content
+
+    # 2. Second injection with identical data -> idempotent skip
+    res2 = update_readme_projects(mock_readme, DEFAULT_PROJECT_FIXTURES)
+    assert res2 is False
+    assert mock_readme.read_text(encoding="utf-8") == updated_content
+
+
+def test_readme_missing_markers_failsafe(tmp_path):
+    """Verify README without markers logs warning and returns False without modifying file."""
+    mock_readme = tmp_path / "README_NO_MARKERS.md"
+    content = "# Just some markdown\nNo markers here."
+    mock_readme.write_text(content, encoding="utf-8")
+
+    res = update_readme_projects(mock_readme, DEFAULT_PROJECT_FIXTURES)
+    assert res is False
+    assert mock_readme.read_text(encoding="utf-8") == content
+
+
+def test_cache_lifecycle_for_projects(tmp_path):
+    """Verify project_metrics structure, ISO timestamp format, and key preservation."""
+    test_cache_path = tmp_path / "cache_test.json"
+    initial_data = {
+        "baseline": {"first_commit_date": "2020-09-18T07:00:00Z"},
+        "repositories": {"foo": {"additions": 100}},
+        "totals": {"additions": 100, "deletions": 50},
+    }
+    save_cache(test_cache_path, initial_data)
+
+    cache = load_cache(test_cache_path)
+    curated = load_curated_projects(PROJECTS_CONFIG_PATH)
+
+    # Fetch with token=None -> falls back to DEFAULT_PROJECT_FIXTURES and sets project_metrics
+    fetch_project_telemetry(curated, cache, token=None)
+    save_cache(test_cache_path, cache)
+
+    reloaded = load_cache(test_cache_path)
+    assert "project_metrics" in reloaded
+    assert "last_updated" in reloaded["project_metrics"]
+    assert len(reloaded["project_metrics"]["projects"]) == 4
+    # Check baseline, repositories, totals preserved
+    assert reloaded["baseline"] == initial_data["baseline"]
+    assert reloaded["repositories"] == initial_data["repositories"]
+    assert reloaded["totals"] == initial_data["totals"]
+
+
+def test_full_coordinator_offline_execution(monkeypatch, capsys):
+    """Verify executing main() unauthenticated exits 0 and updates all assets gracefully."""
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+
+    exit_code = main()
+    assert exit_code == 0
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "[WARN]" in output
+    assert "No token found" in output
+
 
