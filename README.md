@@ -23,6 +23,17 @@
 <!-- PROJECTS:END -->
 
 <!-- METRICS:START -->
+<div align="center">
+  <img src="./assets/metrics.svg" alt="Languages, Streaks & Metrics" width="100%" />
+</div>
+
+<div align="left">
+<pre><code>humam@workstation:~$ git log --graph --oneline -n 6
+* <a href="https://github.com/humam-hossain/linux_shell_scripting/commit/a1b2c3d">[a1b2c3d]</a> (<a href="https://github.com/humam-hossain/linux_shell_scripting">linux_shell_scripting</a>) fix: resolve path resolution in bootstrap script (2 days ago)
+* <a href="https://github.com/humam-hossain/Python/commit/d4e5f6a">[d4e5f6a]</a> (<a href="https://github.com/humam-hossain/Python">Python</a>) feat(robotics): add quaternion kinematics module (4 days ago)
+* <a href="https://github.com/humam-hossain/nn/commit/b7c8d9e">[b7c8d9e]</a> (<a href="https://github.com/humam-hossain/nn">nn</a>) perf: optimize matrix multiplication cache loca... (1 week ago)
+</code></pre>
+</div>
 <!-- METRICS:END -->
 
 <!-- SKILLS:START -->

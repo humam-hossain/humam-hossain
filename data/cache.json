@@ -19,7 +19,7 @@
   "totals": {
     "additions": 55543,
     "deletions": 656,
-    "last_updated": "2026-11-08T03:30:55Z"
+    "last_updated": "2026-11-08T08:42:47Z"
   },
   "project_metrics": {
     "last_updated": "2026-11-08T03:29:48Z",
@@ -91,6 +91,65 @@
           "zsh"
         ],
         "url": "https://github.com/humam-hossain/antigravity-cli-statusline"
+      }
+    ]
+  },
+  "streak_metrics": {
+    "last_updated": "2026-11-08T07:35:46Z",
+    "current_streak": 5,
+    "longest_streak": 14,
+    "total_contributions": 482,
+    "standby": false
+  },
+  "top_languages": {
+    "last_updated": "2026-11-08T07:35:46Z",
+    "languages": [
+      {
+        "name": "Python",
+        "bytes": 65000,
+        "color": "#3572A5",
+        "percentage": 52.0
+      },
+      {
+        "name": "Shell",
+        "bytes": 42000,
+        "color": "#89e051",
+        "percentage": 33.6
+      },
+      {
+        "name": "C",
+        "bytes": 18000,
+        "color": "#555555",
+        "percentage": 14.4
+      }
+    ]
+  },
+  "recent_activity": {
+    "last_updated": "2026-11-08T07:35:46Z",
+    "events": [
+      {
+        "sha": "a1b2c3d",
+        "repo": "linux_shell_scripting",
+        "message": "fix: resolve path resolution in bootstrap script",
+        "time_ago": "2 days ago",
+        "url": "https://github.com/humam-hossain/linux_shell_scripting/commit/a1b2c3d",
+        "repo_url": "https://github.com/humam-hossain/linux_shell_scripting"
+      },
+      {
+        "sha": "d4e5f6a",
+        "repo": "Python",
+        "message": "feat(robotics): add quaternion kinematics module",
+        "time_ago": "4 days ago",
+        "url": "https://github.com/humam-hossain/Python/commit/d4e5f6a",
+        "repo_url": "https://github.com/humam-hossain/Python"
+      },
+      {
+        "sha": "b7c8d9e",
+        "repo": "nn",
+        "message": "perf: optimize matrix multiplication cache locality",
+        "time_ago": "1 week ago",
+        "url": "https://github.com/humam-hossain/nn/commit/b7c8d9e",
+        "repo_url": "https://github.com/humam-hossain/nn"
       }
     ]
   }
