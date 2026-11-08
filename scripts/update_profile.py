@@ -969,6 +969,39 @@ def update_readme_projects(readme_path: Path, projects: list[dict]) -> bool:
     return True
 
 
+VISITOR_BADGE_MARKDOWN = (
+    "[![session_hits](https://komarev.com/ghpvc/?username=humam-hossain"
+    "&color=3fb950&labelColor=161b22&style=flat-square&label=session_hits)]"
+    "(https://github.com/humam-hossain)"
+)
+
+
+def update_readme_badges(readme_path: Path) -> bool:
+    """
+    Appends 5th session_hits visitor counter badge to top contact row idempotently.
+    """
+    if not readme_path.is_file():
+        log_warn(f"README file not found at {readme_path}")
+        return False
+
+    content = readme_path.read_text(encoding="utf-8")
+    if "session_hits" in content:
+        log_info("README.md visitor badge already present (idempotent skip)")
+        return False
+
+    resume_badge_str = "[![Resume]"
+    if resume_badge_str in content:
+        idx = content.index(resume_badge_str)
+        end_link_idx = content.find(")", idx) + 1
+        new_content = content[:end_link_idx] + "\n" + VISITOR_BADGE_MARKDOWN + content[end_link_idx:]
+        readme_path.write_text(new_content, encoding="utf-8")
+        log_ok("Appended visitor counter badge to README.md")
+        return True
+
+    log_warn("README.md missing Resume badge; cannot append visitor badge")
+    return False
+
+
 def main() -> int:
     """CLI Entry point for profile update engine."""
     log_info("humam@workstation profile updater v1.0.0")

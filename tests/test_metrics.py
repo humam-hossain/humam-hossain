@@ -23,10 +23,12 @@ from scripts.generate_metrics import (
 from scripts.update_profile import (
     DEFAULT_LANGUAGE_FIXTURES,
     DEFAULT_STREAK_FIXTURES,
+    VISITOR_BADGE_MARKDOWN,
     aggregate_top_languages,
     compute_streaks_from_calendar,
     fetch_language_telemetry,
     fetch_streak_telemetry,
+    update_readme_badges,
 )
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -365,3 +367,56 @@ def test_vector_progress_track_width_calc():
     # Empty languages - should still produce valid SVG
     svg_empty = generate_metrics_svg(DEFAULT_STREAK_FIXTURES, [])
     ET.fromstring(svg_empty)  # Must not crash
+
+
+def test_visitor_badge_url_parameters():
+    """Verify visitor counter badge Markdown has exact required parameters per D-19, D-20."""
+    assert "username=humam-hossain" in VISITOR_BADGE_MARKDOWN
+    assert "color=3fb950" in VISITOR_BADGE_MARKDOWN
+    assert "labelColor=161b22" in VISITOR_BADGE_MARKDOWN
+    assert "style=flat-square" in VISITOR_BADGE_MARKDOWN
+    assert "label=session_hits" in VISITOR_BADGE_MARKDOWN
+
+
+def test_update_readme_badges_insertion(tmp_path):
+    """Verify update_readme_badges appends session_hits badge after Resume badge."""
+    mock_readme = tmp_path / "README.md"
+    content = (
+        "<div align=\"center\">\n\n"
+        "[![Email](https://img.shields.io/badge/Email-test-161b22)](mailto:test@example.com)\n"
+        "[![LinkedIn](https://img.shields.io/badge/LinkedIn-test-161b22)](https://linkedin.com)\n"
+        "[![Portfolio](https://img.shields.io/badge/Portfolio-test-161b22)](https://github.com)\n"
+        "[![Resume](https://img.shields.io/badge/Resume-PDF-161b22)](./cv/test.pdf)\n\n"
+        "</div>\n"
+    )
+    mock_readme.write_text(content, encoding="utf-8")
+
+    res = update_readme_badges(mock_readme)
+    assert res is True
+
+    new_content = mock_readme.read_text(encoding="utf-8")
+    assert "session_hits" in new_content
+    # Assert it appears after Resume badge
+    resume_pos = new_content.index("[![Resume]")
+    session_pos = new_content.index("[![session_hits]")
+    assert session_pos > resume_pos
+
+
+def test_update_readme_badges_idempotence(tmp_path):
+    """Verify update_readme_badges is strictly idempotent on repeated calls."""
+    mock_readme = tmp_path / "README.md"
+    content = (
+        "<div align=\"center\">\n\n"
+        "[![Resume](https://img.shields.io/badge/Resume-PDF-161b22)](./cv/test.pdf)\n\n"
+        "</div>\n"
+    )
+    mock_readme.write_text(content, encoding="utf-8")
+
+    res1 = update_readme_badges(mock_readme)
+    assert res1 is True
+    first_pass_content = mock_readme.read_text(encoding="utf-8")
+
+    # Second pass: should skip write and return False
+    res2 = update_readme_badges(mock_readme)
+    assert res2 is False
+    assert mock_readme.read_text(encoding="utf-8") == first_pass_content
