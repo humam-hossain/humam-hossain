@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import calendar
 import datetime
+import email.utils
 import html
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import time
 import urllib.error
@@ -1276,6 +1278,190 @@ def load_articles_config(config_path: Path) -> dict:
     except Exception as e:
         log_warn(f"Failed to parse {config_path}: {e}. Using defaults.")
         return default_config
+
+
+def normalize_date_string(date_str: str) -> str:
+    """Normalizes RFC 822/2822, ISO 8601, or plain date strings to YYYY-MM-DD."""
+    if not date_str or not date_str.strip():
+        return datetime.date.today().strftime("%Y-%m-%d")
+
+    s = date_str.strip()
+    if len(s) == 10 and s[4] == "-" and s[7] == "-":
+        return s
+
+    # ISO 8601 / RFC 3339
+    try:
+        clean_iso = s.replace("Z", "+00:00")
+        dt = datetime.datetime.fromisoformat(clean_iso)
+        return dt.strftime("%Y-%m-%d")
+    except Exception:
+        pass
+
+    # RFC 822 / 2822
+    try:
+        dt = email.utils.parsedate_to_datetime(s)
+        return dt.strftime("%Y-%m-%d")
+    except Exception:
+        pass
+
+    return datetime.date.today().strftime("%Y-%m-%d")
+
+
+def parse_feed_xml(xml_bytes: bytes) -> list[dict]:
+    """
+    Parses RSS 2.0 or Atom 1.0 XML content using stdlib ElementTree with namespace stripping.
+    Returns list of dicts with title, url, date, and platform.
+    """
+    root = ET.fromstring(xml_bytes)
+    root_tag = root.tag.split("}")[-1].lower()
+    articles = []
+
+    if root_tag == "rss":
+        channel = root.find("channel")
+        platform_name = "Article"
+        if channel is not None:
+            c_title = channel.findtext("title", "")
+            if c_title.strip():
+                platform_name = c_title.strip()
+
+        for item in root.findall(".//item"):
+            title = (item.findtext("title") or "").strip()
+            link = (item.findtext("link") or "").strip()
+            pub_date = (item.findtext("pubDate") or "").strip()
+            if title and link:
+                articles.append({
+                    "title": title,
+                    "url": link,
+                    "date": normalize_date_string(pub_date),
+                    "platform": platform_name,
+                })
+
+    elif root_tag == "feed":
+        feed_title = "Article"
+        for child in root:
+            if child.tag.split("}")[-1].lower() == "title" and child.text:
+                feed_title = child.text.strip()
+                break
+
+        for entry in root.findall(".//{*}entry") or [e for e in root if e.tag.split("}")[-1].lower() == "entry"]:
+            title = ""
+            link = ""
+            date_str = ""
+            for elem in entry:
+                tag = elem.tag.split("}")[-1].lower()
+                if tag == "title" and elem.text:
+                    title = elem.text.strip()
+                elif tag == "link":
+                    link = elem.attrib.get("href", elem.text or "").strip()
+                elif tag in ("published", "updated") and not date_str and elem.text:
+                    date_str = elem.text.strip()
+
+            if title and link:
+                articles.append({
+                    "title": title,
+                    "url": link,
+                    "date": normalize_date_string(date_str),
+                    "platform": feed_title,
+                })
+
+    return articles
+
+
+def fetch_articles(
+    articles_config: dict,
+    cache: dict,
+    force_refresh: bool = False,
+) -> list[dict]:
+    """
+    Retrieves articles through resilient fallback cascade:
+    1. Checks cache TTL (12h). If cache is valid and not force_refresh, returns cached items.
+    2. Fetches live RSS/Atom feed if rss_url configured (timeout 5s, 1MB buffer clamp).
+    3. On failure/timeout/empty url, falls back to cache['articles']['items'].
+    4. If cache empty, falls back to config['curated_articles'].
+    """
+    rss_url = (articles_config.get("rss_url") or "").strip()
+    cached_articles = cache.get("articles", {})
+    last_updated_str = cached_articles.get("last_updated")
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+
+    # 1. Cache TTL Check (12 hours)
+    if not force_refresh and last_updated_str and cached_articles.get("items"):
+        try:
+            cached_dt = parse_iso_datetime(last_updated_str)
+            elapsed_seconds = (now_utc - cached_dt).total_seconds()
+            if 0 <= elapsed_seconds < 12 * 3600:
+                log_info("Using cached articles from data/cache.json (TTL valid)")
+                return cached_articles["items"]
+        except Exception:
+            pass
+
+    # 2. Live Feed Fetch
+    if rss_url:
+        try:
+            req = urllib.request.Request(
+                rss_url,
+                headers={"User-Agent": "humam-hossain-profile-updater"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                xml_bytes = resp.read(1024 * 1024)  # Clamped to 1MB
+                parsed = parse_feed_xml(xml_bytes)
+                if parsed:
+                    cache["articles"] = {
+                        "last_updated": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "items": parsed,
+                    }
+                    log_ok(f"Fetched {len(parsed)} articles from {rss_url}")
+                    return parsed
+        except Exception as e:
+            log_warn(f"Failed to fetch live feed ({e}). Triggering fallback cascade.")
+
+    # 3. Fallback to existing cached articles
+    if cached_articles.get("items"):
+        log_info("Using previously cached articles as fallback")
+        return cached_articles["items"]
+
+    # 4. Fallback to curated articles from config
+    curated = articles_config.get("curated_articles", [])
+    if curated:
+        log_info("Using curated articles from config/articles.json")
+        cache["articles"] = {
+            "last_updated": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "items": curated,
+        }
+        return curated
+
+    return []
+
+
+def format_articles_terminal_log(articles: list[dict], max_display: int = 4) -> str:
+    """Formats articles into an authentic terminal cat ~/articles.log pre-code block."""
+    lines = [
+        '<div align="left">',
+        "<pre><code>humam@workstation:~$ cat ~/articles.log",
+    ]
+
+    if not articles:
+        lines.append("* [standby] feed listener active — configure rss_url in config/articles.json")
+    else:
+        for art in articles[:max_display]:
+            raw_title = art.get("title", "")
+            # Strip potential HTML tags before unescaping
+            clean_title = re.sub(r"<[^>]+>", "", raw_title)
+            unescaped = html.unescape(clean_title)
+            display_title = unescaped if len(unescaped) <= 55 else unescaped[:52] + "..."
+            safe_title = html.escape(display_title)
+
+            raw_url = art.get("url", "#")
+            safe_url = raw_url if raw_url.startswith(("http://", "https://")) else "#"
+            safe_url = html.escape(safe_url)
+
+            date_val = art.get("date", datetime.date.today().strftime("%Y-%m-%d"))
+            platform = html.escape(art.get("platform", "Article"))
+            lines.append(f'* [{date_val}] <a href="{safe_url}">{safe_title}</a> ({platform})')
+
+    lines.append("</code></pre>")
+    lines.append("</div>")
+    return "\n".join(lines)
 
 
 def update_readme_skills(readme_path: Path) -> bool:
