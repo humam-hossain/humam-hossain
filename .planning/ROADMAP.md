@@ -167,8 +167,16 @@ Plans:
 
 Plans:
 
-- [ ] 05-01: Build terminal-themed skills matrix section (categorized, icon-mapped)
-- [ ] 05-02: Build plug-and-play blog/RSS section with terminal formatting
+- [ ] 05-01-PLAN.md
+- [ ] 05-02-PLAN.md
+
+**Wave 1**
+
+- [ ] 05-01: Build terminal-themed categorized skills matrix SVG (assets/skills.svg) with 2x2 quadrant layout, dynamic flow-pack pills, and update_profile integration
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-02: Build plug-and-play blog/RSS section with dual-format parser, 12h cache, multi-layer fallbacks, and README cat ~/articles.log log box
 
 ### Phase 6: GitHub Actions Automation
 

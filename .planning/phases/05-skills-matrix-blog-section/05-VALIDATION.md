@@ -2,9 +2,9 @@
 phase: "05"
 slug: "skills-matrix-blog-section"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
-# audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
+# audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: true) (#2117)
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: "2026-11-08"
 ---
@@ -40,15 +40,12 @@ created: "2026-11-08"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 05-01-01 | 01 | 0 | CONTENT-02 | — | Test harness & fixtures for skills generator | unit | `pytest tests/test_skills.py -v` | ❌ W0 | ⬜ pending |
-| 05-01-02 | 01 | 1 | CONTENT-02 | T-05-01 | Validated JSON schema & fallback defaults | unit | `pytest tests/test_skills.py -k "test_skills_config" -v` | ❌ W0 | ⬜ pending |
-| 05-01-03 | 01 | 1 | CONTENT-02 | T-05-02 | XML integrity & viewBox="0 0 850 380" layout | unit | `pytest tests/test_skills.py -k "test_generate_skills_svg or test_skills_quadrants" -v` | ❌ W0 | ⬜ pending |
-| 05-01-04 | 01 | 2 | CONTENT-02 | — | Pill wrapping math & desktop hover styling | unit | `pytest tests/test_skills.py -k "test_skills_pill or test_skills_hover" -v` | ❌ W0 | ⬜ pending |
-| 05-02-01 | 02 | 0 | CONTENT-01 | — | Mock XML fixtures (RSS 2.0 & Atom 1.0) & harness | unit | `pytest tests/test_blog.py -v` | ❌ W0 | ⬜ pending |
-| 05-02-02 | 02 | 1 | CONTENT-01 | T-05-03 | Resilient stdlib feed parser with namespace stripping | unit | `pytest tests/test_blog.py -k "test_rss2 or test_atom1" -v` | ❌ W0 | ⬜ pending |
-| 05-02-03 | 02 | 1 | CONTENT-01 | T-05-04 | Date normalization & HTML entity escaping | unit | `pytest tests/test_blog.py -k "test_date or test_title" -v` | ❌ W0 | ⬜ pending |
-| 05-02-04 | 02 | 2 | CONTENT-01 | T-05-05 | 12h cache management & network error fallbacks | unit | `pytest tests/test_blog.py -k "test_cache or test_network" -v` | ❌ W0 | ⬜ pending |
-| 05-02-05 | 02 | 2 | CONTENT-01, CONTENT-02 | — | Full update_profile integration & README injection | integration | `python3 scripts/update_profile.py && pytest` | ❌ W0 | ⬜ pending |
+| 05-01-01 | 01 | 1 | CONTENT-02 | T-05-01 | Config schema, tracer SVG skeleton & test scaffold | unit | `pytest tests/test_skills.py -v` | ❌ W0 | ⬜ pending |
+| 05-01-02 | 01 | 1 | CONTENT-02 | T-05-02, T-05-03 | Dynamic flow-pack layout, 2x2 grid, XML validation & CLI | unit | `python3 scripts/generate_skills.py && pytest tests/test_skills.py -v` | ❌ W0 | ⬜ pending |
+| 05-01-03 | 01 | 1 | CONTENT-02 | — | update_profile skills integration & README injection | integration | `python3 scripts/update_profile.py && pytest tests/ -v` | ❌ W0 | ⬜ pending |
+| 05-02-01 | 02 | 2 | CONTENT-01 | — | Articles config, mock XML fixtures (RSS 2.0 & Atom 1.0) & harness | unit | `pytest tests/test_blog.py -v` | ❌ W0 | ⬜ pending |
+| 05-02-02 | 02 | 2 | CONTENT-01 | T-05-04, T-05-05, T-05-06 | Feed parser, date normalizer, 12h cache & secure log formatter | unit | `pytest tests/test_blog.py -v` | ❌ W0 | ⬜ pending |
+| 05-02-03 | 02 | 2 | CONTENT-01 | — | README blog injection, streamlined sequence & full suite | integration | `python3 scripts/update_profile.py && pytest` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
