@@ -8,6 +8,7 @@
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-humam--hossain-161b22?style=flat-square&logo=linkedin&logoColor=58a6ff)](https://www.linkedin.com/in/humam-hossain-7ab762230/)
 [![Portfolio](https://img.shields.io/badge/Portfolio-humam--hossain-161b22?style=flat-square&logo=safari&logoColor=3fb950)](https://github.com/humam-hossain)
 [![Resume](https://img.shields.io/badge/Resume-PDF-161b22?style=flat-square&logo=adobeacrobatreader&logoColor=ff7b72)](./cv/outputs/cv_humam_hossain.pdf)
+[![session_hits](https://komarev.com/ghpvc/?username=humam-hossain&color=3fb950&labelColor=161b22&style=flat-square&label=session_hits)](https://github.com/humam-hossain)
 
 </div>
 

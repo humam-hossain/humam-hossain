@@ -992,8 +992,10 @@ def update_readme_badges(readme_path: Path) -> bool:
     resume_badge_str = "[![Resume]"
     if resume_badge_str in content:
         idx = content.index(resume_badge_str)
-        end_link_idx = content.find(")", idx) + 1
-        new_content = content[:end_link_idx] + "\n" + VISITOR_BADGE_MARKDOWN + content[end_link_idx:]
+        end_line_idx = content.find("\n", idx)
+        if end_line_idx == -1:
+            end_line_idx = len(content)
+        new_content = content[:end_line_idx] + "\n" + VISITOR_BADGE_MARKDOWN + content[end_line_idx:]
         readme_path.write_text(new_content, encoding="utf-8")
         log_ok("Appended visitor counter badge to README.md")
         return True
