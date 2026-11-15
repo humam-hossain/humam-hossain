@@ -978,9 +978,11 @@ def update_readme_projects(readme_path: Path, projects: list[dict]) -> bool:
         links.append(f'cd <a href="{url}">{name}</a>')
 
     links_cmd = " | ".join(links)
+    existing_src = re.search(r'src="(\./assets/projects\.svg(?:\?v=[^"\'#\s>]+)?(?:#[^"\'\s>]+)?)"', content[start_idx:end_idx])
+    img_src = existing_src.group(1) if existing_src else "./assets/projects.svg"
     replacement = f"""
 <div align="center">
-  <img src="./assets/projects.svg" alt="Open Source Projects Dashboard" width="100%" />
+  <img src="{img_src}" alt="Open Source Projects Dashboard" width="100%" />
 </div>
 
 <div align="center">
@@ -1231,9 +1233,11 @@ def update_readme_metrics(readme_path: Path, activity_html: str) -> bool:
     start_idx = content.index(start_tag) + len(start_tag)
     end_idx = content.index(end_tag)
 
+    existing_src = re.search(r'src="(\./assets/metrics\.svg(?:\?v=[^"\'#\s>]+)?(?:#[^"\'\s>]+)?)"', content[start_idx:end_idx])
+    img_src = existing_src.group(1) if existing_src else "./assets/metrics.svg"
     replacement = f"""
 <div align="center">
-  <img src="./assets/metrics.svg" alt="Languages, Streaks & Metrics" width="100%" />
+  <img src="{img_src}" alt="Languages, Streaks & Metrics" width="100%" />
 </div>
 
 {activity_html}
@@ -1484,9 +1488,11 @@ def update_readme_skills(readme_path: Path) -> bool:
     start_idx = content.index(start_tag) + len(start_tag)
     end_idx = content.index(end_tag)
 
-    replacement = """
+    existing_src = re.search(r'src="(\./assets/skills\.svg(?:\?v=[^"\'#\s>]+)?(?:#[^"\'\s>]+)?)"', content[start_idx:end_idx])
+    img_src = existing_src.group(1) if existing_src else "./assets/skills.svg"
+    replacement = f"""
 <div align="center">
-  <img src="./assets/skills.svg" alt="Categorized Skills Matrix" width="100%" />
+  <img src="{img_src}" alt="Categorized Skills Matrix" width="100%" />
 </div>
 """
     new_content = content[:start_idx] + "\n" + replacement.strip() + "\n" + content[end_idx:]

@@ -107,7 +107,7 @@ def test_readme_structure():
         content = f.read()
 
     # Image embed
-    assert '<img src="./assets/hero.svg"' in content
+    assert '<img src="./assets/hero.svg' in content
     assert 'alt="humam@workstation"' in content
 
     # Flat-square Shields.io badges
