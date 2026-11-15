@@ -194,8 +194,12 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 06-01: Create `.github/workflows/profile-updater.yml` with cron schedule, checkout, Python setup, and commit/push steps
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 06-02: End-to-end integration test — trigger workflow manually, verify profile updates, validate SVG rendering
 
 ## Progress
