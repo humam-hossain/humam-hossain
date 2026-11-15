@@ -43,3 +43,7 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
+# Temporary automation files
+.git/COMMIT_MSG_TMP
+*.tmp
+
