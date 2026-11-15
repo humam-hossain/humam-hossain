@@ -33,7 +33,7 @@ coverage:
   - deliverable: "5-stage CI pipeline simulation with idempotency verification"
     verification:
       - kind: command
-        ref: "bash tests/test_ci_pipeline.sh"
+        ref: "tests/test_ci_pipeline.sh"
         status: pass
     human_judgment: false
   - deliverable: "Live deployment readiness verification"
