@@ -31,8 +31,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Automation & Workflows (AUTO)
 
 - [x] **AUTO-01**: Standalone Python update engine (`scripts/update_profile.py`) querying GitHub GraphQL API with rate-limit and error handling
-- [ ] **AUTO-02**: Scheduled GitHub Actions workflow (`.github/workflows/profile-updater.yml`) running on daily cron and manual trigger (`workflow_dispatch`)
-- [ ] **AUTO-03**: Automated git commit and push step within the workflow running under standard `GITHUB_TOKEN` permissions with zero hosting cost
+- [x] **AUTO-02**: Scheduled GitHub Actions workflow (`.github/workflows/profile-updater.yml`) running on daily cron and manual trigger (`workflow_dispatch`)
+- [x] **AUTO-03**: Automated git commit and push step within the workflow running under standard `GITHUB_TOKEN` permissions with zero hosting cost
 
 ### Skills & Content Extensibility (CONTENT)
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | METRIC-04 | Phase 4 | Complete |
 | CONTENT-01 | Phase 5 | Complete |
 | CONTENT-02 | Phase 5 | Complete |
-| AUTO-02 | Phase 6 | Pending |
-| AUTO-03 | Phase 6 | Pending |
+| AUTO-02 | Phase 6 | Complete |
+| AUTO-03 | Phase 6 | Complete |
 
 **Coverage:**
 

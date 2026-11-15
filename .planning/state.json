@@ -31,13 +31,13 @@
     {
       "number": "6",
       "name": "GitHub Actions Automation",
-      "status": "pending"
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd-progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 6 of 6 · 67% · executing"
+    "command": "/gsd-new-milestone",
+    "label": "Start a new milestone",
+    "reason": "All phases complete — start a new milestone"
   },
-  "updated_at": "2026-11-15T11:13:05.813Z"
+  "updated_at": "2026-11-15T11:39:28.671Z"
 }
