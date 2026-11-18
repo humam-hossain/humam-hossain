@@ -1,80 +1,230 @@
 #!/usr/bin/env python3
 """
 scripts/configure_profile.py
-Interactive CLI Wizard for Muhammed Humam Hossain (@humam-hossain).
-Prompts you for your exact preferences (projects, skills, system info, contacts, ASCII art),
-saves your answers to profile_config.json, and generates dark_mode.svg and light_mode.svg.
+Interactive Terminal TUI Setup Wizard for Muhammed Humam Hossain (@humam-hossain).
+Provides full hjkl / Vim-style keyboard navigation, live search, and lists public
+GitHub repositories ordered by latest committed repo (pushed_at descending).
+Saves preferences to profile_config.json and builds dark_mode.svg & light_mode.svg.
+Standard library only (zero external dependencies).
 """
 
 from __future__ import annotations
 
+import datetime
+import html
 import json
 import os
 from pathlib import Path
-import readline
+import re
+import select
+import shutil
+import subprocess
 import sys
+import termios
+import tty
 import urllib.error
 import urllib.request
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT_DIR / "profile_config.json"
+BUILD_SCRIPT = ROOT_DIR / "scripts" / "build_profile.py"
 
-# ANSI Colors
+# ANSI 24-bit TrueColor Palettes
 CYAN = "\033[38;2;88;166;255m"
 GREEN = "\033[38;2;63;185;80m"
 AMBER = "\033[38;2;255;166;87m"
 RED = "\033[38;2;248;81;73m"
 MUTED = "\033[38;2;139;148;158m"
+WHITE = "\033[38;2;255;255;255m"
+BG_ACTIVE = "\033[48;2;22;27;34m"
+BG_HIGHLIGHT = "\033[48;2;30;42;56m"
 BOLD = "\033[1m"
+DIM = "\033[2m"
 RESET = "\033[0m"
 
 
-def print_banner() -> None:
-    print(f"\n{AMBER}{BOLD}=== Andrew6rant Neofetch Profile Interactive Setup Wizard ==={RESET}")
-    print(f"{MUTED}Customize your GitHub profile README interactively.{RESET}")
-    print(f"{MUTED}Press Enter on any prompt to accept the current/default value.{RESET}\n")
+def strip_ansi(text: str) -> str:
+    """Removes ANSI escape codes to measure true visible string width."""
+    return re.sub(r"\033\[[0-9;]*[a-zA-Z]", "", text)
 
 
-def prompt_text(label: str, default: str = "") -> str:
-    """Prompts the user with an optional default value."""
-    if default:
-        p = f"{CYAN}?{RESET} {BOLD}{label}{RESET} [{MUTED}{default}{RESET}]: "
-    else:
-        p = f"{CYAN}?{RESET} {BOLD}{label}{RESET}: "
-    try:
-        val = input(p).strip()
-    except (KeyboardInterrupt, EOFError):
-        print(f"\n{RED}Setup aborted.{RESET}")
-        sys.exit(0)
-    return val if val else default
+def pad_line(text: str, cols: int) -> str:
+    """Pads text with spaces to match column width without wrapping."""
+    vis_len = len(strip_ansi(text))
+    if vis_len < cols:
+        return text + " " * (cols - vis_len)
+    elif vis_len > cols:
+        # Simple visible clamp
+        raw_chars = []
+        cur_vis = 0
+        in_esc = False
+        for ch in text:
+            if ch == "\033":
+                in_esc = True
+                raw_chars.append(ch)
+            elif in_esc:
+                raw_chars.append(ch)
+                if ch.isalpha():
+                    in_esc = False
+            else:
+                if cur_vis < cols - 1:
+                    raw_chars.append(ch)
+                    cur_vis += 1
+                else:
+                    raw_chars.append("…")
+                    break
+        raw_chars.append(RESET)
+        return "".join(raw_chars)
+    return text
 
 
-def prompt_yes_no(label: str, default: bool = True) -> bool:
-    """Prompts user with a yes/no question."""
-    suffix = "[Y/n]" if default else "[y/N]"
-    p = f"{CYAN}?{RESET} {BOLD}{label}{RESET} {MUTED}{suffix}{RESET}: "
-    try:
-        val = input(p).strip().lower()
-    except (KeyboardInterrupt, EOFError):
-        print(f"\n{RED}Setup aborted.{RESET}")
-        sys.exit(0)
-    if not val:
-        return default
-    return val.startswith("y")
+class TerminalUI:
+    """Context manager for raw terminal cbreak mode with alternate screen buffer."""
+
+    def __init__(self) -> None:
+        self.is_tty = sys.stdin.isatty() and sys.stdout.isatty()
+        self.fd = sys.stdin.fileno() if self.is_tty else None
+        self.old_settings = None
+
+    def __enter__(self) -> TerminalUI:
+        if self.is_tty and self.fd is not None:
+            self.old_settings = termios.tcgetattr(self.fd)
+            tty.setcbreak(self.fd)
+            # Switch to alternate screen, hide cursor
+            sys.stdout.write("\033[?1049h\033[?25l")
+            sys.stdout.flush()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        if self.is_tty and self.fd is not None and self.old_settings is not None:
+            # Restore normal screen and visible cursor
+            sys.stdout.write("\033[?25h\033[?1049l")
+            sys.stdout.flush()
+            termios.tcsetattr(self.fd, termios.TCSADRAIN, self.old_settings)
+
+
+def read_key(fd: int) -> str:
+    """Reads a single keypress or escape sequence from stdin."""
+    b = os.read(fd, 1)
+    if not b:
+        return ""
+    ch = b.decode("utf-8", errors="ignore")
+    if ch == "\x1b":
+        # Check if more characters are waiting (ANSI escape sequence)
+        r, _, _ = select.select([fd], [], [], 0.05)
+        if r:
+            seq = os.read(fd, 16).decode("utf-8", errors="ignore")
+            if seq == "[A":
+                return "UP"
+            elif seq == "[B":
+                return "DOWN"
+            elif seq == "[C":
+                return "RIGHT"
+            elif seq == "[D":
+                return "LEFT"
+            elif seq.startswith("[5") or seq.startswith("[I"):
+                return "PAGE_UP"
+            elif seq.startswith("[6") or seq.startswith("[G"):
+                return "PAGE_DOWN"
+            elif seq.startswith("[H") or seq.startswith("[1"):
+                return "HOME"
+            elif seq.startswith("[F") or seq.startswith("[4"):
+                return "END"
+            return "ESC"
+        return "ESC"
+    elif ch in ("\r", "\n"):
+        return "ENTER"
+    elif ch == " ":
+        return "SPACE"
+    elif ch in ("\x7f", "\x08"):
+        return "BACKSPACE"
+    elif ch == "\x03":
+        return "CTRL_C"
+    elif ch == "\t":
+        return "TAB"
+    return ch
+
+
+def prompt_line_editor(tui: TerminalUI, title: str, prompt_label: str, initial_text: str = "") -> str:
+    """Interactive line editor with backspace, arrows, and home/end support in raw mode."""
+    if not tui.is_tty or tui.fd is None:
+        try:
+            val = input(f"{prompt_label} [{initial_text}]: ").strip()
+            return val if val else initial_text
+        except Exception:
+            return initial_text
+
+    buf = list(initial_text)
+    pos = len(buf)
+
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+        lines = [
+            f"{AMBER}{BOLD}=== {title} ==={RESET}",
+            f"{MUTED}Edit text below. Press [Enter] to accept, [Esc] to cancel/keep original.{RESET}",
+            "",
+            f"{CYAN}{BOLD}{prompt_label}:{RESET}",
+        ]
+        disp = "".join(buf)
+        lines.append(f"  ❯ {BOLD}{disp}{RESET} ")
+        lines.append("")
+        lines.append(f"{MUTED}[Enter]: Submit  |  [Esc]: Keep '{initial_text}'  |  [Ctrl+U]: Clear{RESET}")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        # Pad remaining screen lines to avoid debris
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key == "ENTER":
+            break
+        elif key == "ESC":
+            return initial_text
+        elif key == "CTRL_C":
+            return initial_text
+        elif key == "BACKSPACE":
+            if pos > 0:
+                buf.pop(pos - 1)
+                pos -= 1
+        elif key == "LEFT":
+            if pos > 0:
+                pos -= 1
+        elif key == "RIGHT":
+            if pos < len(buf):
+                pos += 1
+        elif key == "HOME":
+            pos = 0
+        elif key == "END":
+            pos = len(buf)
+        elif key == "\x15":  # Ctrl+U
+            buf = []
+            pos = 0
+        elif len(key) == 1 and 32 <= ord(key) <= 126:
+            buf.insert(pos, key)
+            pos += 1
+
+    result = "".join(buf).strip()
+    return result if result else initial_text
 
 
 def fetch_user_repos(username: str) -> list[dict]:
-    """Fetches public repositories for the user from GitHub API."""
-    print(f"{MUTED}Fetching public repositories for @{username} from GitHub...{RESET}")
+    """
+    Fetches all public repositories for username ordered by latest commit / push.
+    Queries GitHub API with sort=pushed&direction=desc.
+    """
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or os.environ.get("PROFILE_TOKEN")
-    headers = {"User-Agent": "profile-wizard"}
+    headers = {"User-Agent": "neofetch-profile-wizard"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
     all_repos = []
     page = 1
     while page <= 3:
-        url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}&sort=updated"
+        url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}&sort=pushed&direction=desc"
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -83,10 +233,12 @@ def fetch_user_repos(username: str) -> list[dict]:
                     break
                 for r in data:
                     all_repos.append({
-                        "name": r.get("name"),
+                        "name": r.get("name", ""),
                         "description": r.get("description") or "",
                         "stars": r.get("stargazers_count", 0),
                         "language": r.get("language") or "Code",
+                        "pushed_at": r.get("pushed_at") or "",
+                        "fork": r.get("fork", False),
                     })
                 if len(data) < 100:
                     break
@@ -94,219 +246,658 @@ def fetch_user_repos(username: str) -> list[dict]:
         except Exception:
             break
 
+    # Guarantee strict ordering by latest push date descending
+    all_repos.sort(key=lambda x: x.get("pushed_at") or "", reverse=True)
     return all_repos
 
 
-def setup_projects(current_config: dict, username: str) -> list[dict]:
-    print(f"\n{GREEN}{BOLD}[1/5] Featured Projects{RESET}")
-    print(f"{MUTED}Select which repositories you want to showcase in your profile.{RESET}\n")
+# ==============================================================================
+# Step 1: Featured Projects Multi-Select (hjkl navigation, Space toggle, / search)
+# ==============================================================================
 
-    repos = fetch_user_repos(username)
-    if repos:
-        print(f"{BOLD}Available repositories on GitHub:{RESET}")
-        for idx, r in enumerate(repos[:30], 1):
-            desc = f" - {r['description'][:45]}..." if len(r['description']) > 45 else (f" - {r['description']}" if r['description'] else "")
-            stars = f" (★ {r['stars']})" if r['stars'] > 0 else ""
-            print(f"  {CYAN}{idx:2d}.{RESET} {BOLD}{r['name']}{RESET}{desc}{AMBER}{stars}{RESET}")
-        print()
+def select_projects_tui(tui: TerminalUI, repos: list[dict], current_selected_names: list[str]) -> list[dict]:
+    """
+    Interactive TUI menu for repository selection with hjkl vim controls.
+    List is ordered strictly by latest committed repo (pushed_at descending).
+    """
+    if not tui.is_tty or tui.fd is None or not repos:
+        # Fallback for non-interactive
+        return repos[:4]
 
-    current_projects = current_config.get("featured_projects", [])
-    current_names = [p.get("repo") for p in current_projects]
-    print(f"{MUTED}Currently featured: {', '.join(current_names) if current_names else 'None'}{RESET}")
+    selected_set = set(current_selected_names)
+    cursor = 0
+    scroll_offset = 0
+    search_query = ""
+    search_mode = False
 
-    if repos:
-        choice_str = prompt_text(
-            "Enter repository numbers (e.g. 1, 3, 5) or repository names separated by commas",
-            default=",".join(current_names[:4])
-        )
-    else:
-        choice_str = prompt_text("Enter repository names separated by commas", default=",".join(current_names[:4]))
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
 
-    selected_repos = []
-    tokens = [t.strip() for t in choice_str.split(",") if t.strip()]
-
-    for t in tokens:
-        if t.isdigit() and repos and 1 <= int(t) <= len(repos):
-            selected_repos.append(repos[int(t) - 1])
+        # Filter items if search query is set
+        if search_query:
+            filtered_indices = [
+                idx for idx, r in enumerate(repos)
+                if search_query.lower() in r["name"].lower() or search_query.lower() in r["description"].lower()
+            ]
         else:
-            # Match by name
-            matched = next((r for r in repos if r["name"].lower() == t.lower()), None)
-            if matched:
-                selected_repos.append(matched)
+            filtered_indices = list(range(len(repos)))
+
+        if cursor >= len(filtered_indices):
+            cursor = max(0, len(filtered_indices) - 1)
+
+        # Header area: 5 lines, footer: 3 lines
+        viewport_height = max(5, rows - 9)
+        if cursor < scroll_offset:
+            scroll_offset = cursor
+        elif cursor >= scroll_offset + viewport_height:
+            scroll_offset = cursor - viewport_height + 1
+
+        lines = []
+        # Title Banner
+        lines.append(f"{AMBER}{BOLD}=== [Step 1/5] Select Featured Projects (hjkl to navigate) ==={RESET}")
+        lines.append(f"{MUTED}Repositories ordered by latest commit. Toggle with [Space], search with [/], finish with [Enter].{RESET}")
+
+        # Status Line
+        search_status = f"{CYAN}Search: [{search_query}_]{RESET} " if search_mode else (f"{MUTED}Filter: '{search_query}' (press / to edit){RESET} " if search_query else f"{MUTED}Filter: [press /]{RESET} ")
+        sel_count_color = GREEN if 1 <= len(selected_set) <= 5 else (RED if len(selected_set) > 5 else AMBER)
+        lines.append(f"Selected: {sel_count_color}{BOLD}{len(selected_set)}/5 projects{RESET}  |  Total: {len(repos)} repos  |  {search_status}")
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+
+        # List Area
+        visible_indices = filtered_indices[scroll_offset : scroll_offset + viewport_height]
+        for v_idx, orig_idx in enumerate(visible_indices):
+            actual_pos = scroll_offset + v_idx
+            repo = repos[orig_idx]
+            name = repo["name"]
+            is_selected = name in selected_set
+            check_box = f"{GREEN}[x]{RESET}" if is_selected else f"{MUTED}[ ]{RESET}"
+
+            # Format push date
+            pushed_raw = repo.get("pushed_at", "")
+            pushed_str = pushed_raw[:10] if pushed_raw else "    -     "
+
+            lang = repo.get("language") or "Code"
+            desc = repo.get("description") or ""
+
+            # Truncate desc for neat layout
+            max_desc_len = max(10, cols - 56)
+            if len(desc) > max_desc_len:
+                desc = desc[:max_desc_len - 1] + "…"
+
+            is_active = (actual_pos == cursor)
+            if is_active:
+                arrow = f"{CYAN}{BOLD}❯{RESET}"
+                line_str = f"{arrow} {check_box} {BOLD}{CYAN}{name:<22}{RESET} {MUTED}{pushed_str}{RESET} {AMBER}{lang:<10}{RESET} {desc}"
             else:
-                selected_repos.append({"name": t, "description": ""})
+                arrow = " "
+                line_str = f"{arrow} {check_box} {BOLD}{name:<22}{RESET} {MUTED}{pushed_str}{RESET} {MUTED}{lang:<10}{RESET} {MUTED}{desc}{RESET}"
 
-    # Limit to 5 max to prevent overflow
-    selected_repos = selected_repos[:5]
-    result_projects = []
+            lines.append(line_str)
 
-    print(f"\n{MUTED}Now set a concise one-line description for each chosen project:{RESET}")
-    for p in selected_repos:
-        repo_name = p["name"]
-        existing = next((cp for cp in current_projects if cp.get("repo") == repo_name), None)
-        def_desc = existing.get("description") if existing else (p.get("description") or "Unix software & tools")
-        desc = prompt_text(f"Description for '{repo_name}'", default=def_desc)
-        result_projects.append({"repo": repo_name, "description": desc})
+        # Fill viewport gap if filtered list is short
+        for _ in range(viewport_height - len(visible_indices)):
+            lines.append("")
 
-    return result_projects
+        # Footer Help Bar
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        if search_mode:
+            lines.append(f"{CYAN}{BOLD}[Search Mode]{RESET} Type to filter, [Enter] or [Esc] to return to hjkl navigation.")
+        else:
+            lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Space]{RESET} Toggle  {BOLD}[h/l]{RESET} PgUp/PgDn  {BOLD}[/]{RESET} Search  {BOLD}[Enter]{RESET} Confirm  {BOLD}[q]{RESET} Quit")
+
+        # Render zero-flicker frame
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+
+        if search_mode:
+            if key in ("ENTER", "ESC"):
+                search_mode = False
+            elif key == "BACKSPACE":
+                if search_query:
+                    search_query = search_query[:-1]
+                    cursor = 0
+            elif key == "CTRL_C":
+                search_mode = False
+                search_query = ""
+            elif len(key) == 1 and 32 <= ord(key) <= 126:
+                search_query += key
+                cursor = 0
+            continue
+
+        # Normal hjkl navigation mode
+        if key in ("j", "DOWN"):
+            if cursor < len(filtered_indices) - 1:
+                cursor += 1
+        elif key in ("k", "UP"):
+            if cursor > 0:
+                cursor -= 1
+        elif key in ("h", "LEFT", "PAGE_UP"):
+            cursor = max(0, cursor - viewport_height)
+        elif key in ("l", "RIGHT", "PAGE_DOWN"):
+            cursor = min(len(filtered_indices) - 1, cursor + viewport_height)
+        elif key in ("g", "HOME"):
+            cursor = 0
+        elif key in ("G", "END"):
+            cursor = max(0, len(filtered_indices) - 1)
+        elif key == "SPACE":
+            if filtered_indices and 0 <= cursor < len(filtered_indices):
+                repo_name = repos[filtered_indices[cursor]]["name"]
+                if repo_name in selected_set:
+                    selected_set.remove(repo_name)
+                else:
+                    selected_set.add(repo_name)
+        elif key == "/":
+            search_mode = True
+        elif key == "ENTER":
+            if not selected_set:
+                # If nothing selected, select current cursor item
+                if filtered_indices and 0 <= cursor < len(filtered_indices):
+                    selected_set.add(repos[filtered_indices[cursor]]["name"])
+            break
+        elif key in ("q", "CTRL_C"):
+            # Exit confirmation or abort
+            break
+
+    # Build chosen list preserving sort by latest pushed_at
+    chosen_repos = [r for r in repos if r["name"] in selected_set]
+    return chosen_repos[:5]
 
 
-def setup_skills(current_config: dict) -> list[dict]:
-    print(f"\n{GREEN}{BOLD}[2/5] Technical Skills & Categories{RESET}")
-    print(f"{MUTED}Group your languages, frameworks, systems, and tools into neat categories.{RESET}\n")
+# ==============================================================================
+# Step 1b: Edit Project Descriptions
+# ==============================================================================
 
-    current_skills = current_config.get("skills", [
+def edit_project_descriptions_tui(tui: TerminalUI, chosen_repos: list[dict], current_projects: list[dict]) -> list[dict]:
+    """Allows user to inspect and edit one-line descriptions for selected projects."""
+    if not tui.is_tty or tui.fd is None:
+        return [
+            {"repo": r["name"], "description": r.get("description") or "Unix software & tools"}
+            for r in chosen_repos
+        ]
+
+    # Map existing descriptions
+    desc_map = {}
+    for p in current_projects:
+        desc_map[p.get("repo", "")] = p.get("description", "")
+
+    projects_data = []
+    for r in chosen_repos:
+        name = r["name"]
+        def_desc = desc_map.get(name) or r.get("description") or "Unix software & tools"
+        projects_data.append({"repo": name, "description": def_desc})
+
+    cursor = 0
+    # Items: [projects...] + [Done & Continue]
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+        total_items = len(projects_data) + 1  # +1 for continue button
+
+        lines = [
+            f"{AMBER}{BOLD}=== [Step 1b] Confirm Project Descriptions ==={RESET}",
+            f"{MUTED}Select a project and press [Enter] to customize its description. Press [c] to continue.{RESET}",
+            f"{MUTED}{'─' * (cols - 2)}{RESET}",
+        ]
+
+        for idx, p in enumerate(projects_data):
+            is_active = (cursor == idx)
+            arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+            hdr = f"{BOLD}{CYAN if is_active else WHITE}[{idx + 1}] {p['repo']}{RESET}"
+            lines.append(f"{arrow} {hdr}")
+            lines.append(f"    {MUTED}Description:{RESET} {p['description']}")
+            lines.append("")
+
+        # Continue button
+        is_cont_active = (cursor == len(projects_data))
+        cont_arrow = f"{GREEN}{BOLD}❯{RESET}" if is_cont_active else " "
+        cont_btn = f"{GREEN}{BOLD}[ Finish Projects & Continue -> ]{RESET}" if is_cont_active else f"{MUTED}[ Finish Projects & Continue -> ]{RESET}"
+        lines.append(f"{cont_arrow} {cont_btn}")
+        lines.append("")
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Edit / Select  {BOLD}[c]{RESET} Continue")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key in ("j", "DOWN"):
+            cursor = min(total_items - 1, cursor + 1)
+        elif key in ("k", "UP"):
+            cursor = max(0, cursor - 1)
+        elif key in ("c", "C"):
+            break
+        elif key == "ENTER":
+            if cursor == len(projects_data):
+                break
+            else:
+                p = projects_data[cursor]
+                new_desc = prompt_line_editor(
+                    tui,
+                    f"Edit Description for '{p['repo']}'",
+                    "One-line description",
+                    initial_text=p["description"]
+                )
+                p["description"] = new_desc
+
+    return projects_data
+
+
+# ==============================================================================
+# Step 2: Technical Skills Categories (hjkl navigation, edit, add, delete)
+# ==============================================================================
+
+def setup_skills_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
+    """Configures skills categories with hjkl navigation, inline editing, add, and delete."""
+    skills = [dict(s) for s in current_config.get("skills", [
         {"category": "Languages.Code", "items": "Python, C/C++, Bash, JavaScript"},
         {"category": "Languages.Systems", "items": "Linux, Docker, Git, CI/CD"},
         {"category": "Technologies.AI", "items": "PyTorch, OpenCV, ROS2, Gazebo"},
         {"category": "Technologies.SQA", "items": "PyTest, Jest, Static Analysis"},
-    ])
+    ])]
 
-    skills_list = []
-    if prompt_yes_no("Would you like to customize each skills category?", default=True):
-        for idx, s in enumerate(current_skills, 1):
-            cat = prompt_text(f"Category {idx} Name", default=s.get("category", f"Category.{idx}"))
-            items = prompt_text(f"Items for '{cat}'", default=s.get("items", ""))
-            skills_list.append({"category": cat, "items": items})
+    if not tui.is_tty or tui.fd is None:
+        return skills
 
-        # Allow adding an extra category
-        while prompt_yes_no("Add another skill category?", default=False):
-            cat = prompt_text("New Category Name (e.g. Languages.Real)")
-            items = prompt_text(f"Items for '{cat}' (e.g. English, Bengali)")
-            if cat and items:
-                skills_list.append({"category": cat, "items": items})
-    else:
-        skills_list = current_skills
+    cursor = 0
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+        # Items: [skills...] + [Add Category] + [Continue]
+        btn_add_idx = len(skills)
+        btn_cont_idx = len(skills) + 1
+        total_items = len(skills) + 2
 
-    return skills_list
+        lines = [
+            f"{AMBER}{BOLD}=== [Step 2/5] Technical Skills & Categories ==={RESET}",
+            f"{MUTED}Organize your skill lines. Press [Enter] to edit, [a] to add, [d] to delete, [c] to continue.{RESET}",
+            f"{MUTED}{'─' * (cols - 2)}{RESET}",
+        ]
+
+        for idx, s in enumerate(skills):
+            is_active = (cursor == idx)
+            arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+            cat_name = f"{BOLD}{CYAN if is_active else WHITE}{s.get('category')}{RESET}"
+            items_str = s.get("items", "")
+            lines.append(f"{arrow} {cat_name}: {items_str}")
+
+        lines.append("")
+        # Add button
+        is_add_active = (cursor == btn_add_idx)
+        add_arrow = f"{AMBER}{BOLD}❯{RESET}" if is_add_active else " "
+        add_btn = f"{AMBER}{BOLD}[ + Add New Skill Category ]{RESET}" if is_add_active else f"{MUTED}[ + Add New Skill Category ]{RESET}"
+        lines.append(f"{add_arrow} {add_btn}")
+
+        # Continue button
+        is_cont_active = (cursor == btn_cont_idx)
+        cont_arrow = f"{GREEN}{BOLD}❯{RESET}" if is_cont_active else " "
+        cont_btn = f"{GREEN}{BOLD}[ Continue to System Telemetry -> ]{RESET}" if is_cont_active else f"{MUTED}[ Continue to System Telemetry -> ]{RESET}"
+        lines.append(f"{cont_arrow} {cont_btn}")
+
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Edit  {BOLD}[a]{RESET} Add  {BOLD}[d]{RESET} Delete  {BOLD}[c]{RESET} Continue")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key in ("j", "DOWN"):
+            cursor = min(total_items - 1, cursor + 1)
+        elif key in ("k", "UP"):
+            cursor = max(0, cursor - 1)
+        elif key in ("c", "C"):
+            break
+        elif key in ("a", "A"):
+            new_cat = prompt_line_editor(tui, "New Skill Category", "Category Name (e.g. Languages.Real)", "Languages.Real")
+            new_items = prompt_line_editor(tui, "New Skill Category Items", f"Items for '{new_cat}'", "English, Bengali")
+            if new_cat and new_items:
+                skills.append({"category": new_cat, "items": new_items})
+                cursor = len(skills) - 1
+        elif key in ("d", "D", "x"):
+            if 0 <= cursor < len(skills) and len(skills) > 1:
+                skills.pop(cursor)
+                cursor = min(cursor, len(skills) - 1)
+        elif key == "ENTER":
+            if cursor == btn_cont_idx:
+                break
+            elif cursor == btn_add_idx:
+                new_cat = prompt_line_editor(tui, "New Skill Category", "Category Name (e.g. Languages.Real)", "Languages.Real")
+                new_items = prompt_line_editor(tui, "New Skill Category Items", f"Items for '{new_cat}'", "English, Bengali")
+                if new_cat and new_items:
+                    skills.append({"category": new_cat, "items": new_items})
+            elif 0 <= cursor < len(skills):
+                s = skills[cursor]
+                s["category"] = prompt_line_editor(tui, "Edit Skill Category Name", "Category Name", s.get("category", ""))
+                s["items"] = prompt_line_editor(tui, f"Edit Items for '{s['category']}'", "Items (comma-separated)", s.get("items", ""))
+
+    return skills
 
 
-def setup_system_info(current_config: dict) -> tuple[dict, list[dict], dict]:
-    print(f"\n{GREEN}{BOLD}[3/5] System Telemetry & Bio{RESET}")
-    print(f"{MUTED}Configure the prompt line and system specs.{RESET}\n")
+# ==============================================================================
+# Step 3: System Telemetry & Specs (hjkl navigation, edit fields)
+# ==============================================================================
 
-    user_info = current_config.get("user", {})
-    prompt_hdr = prompt_text("Terminal Prompt (Header)", default=user_info.get("prompt_header", "humam@workstation"))
-    user_info["prompt_header"] = prompt_hdr
+def setup_system_info_tui(tui: TerminalUI, current_config: dict) -> tuple[dict, list[dict], dict]:
+    """Configures system specs, terminal prompt, and uptime telemetry."""
+    user_info = dict(current_config.get("user", {}))
+    telemetry = dict(current_config.get("telemetry", {}))
 
+    prompt_hdr = user_info.get("prompt_header", "humam@workstation")
     sys_info = current_config.get("system_info", [])
     def_os = next((x["value"] for x in sys_info if x["key"] == "OS"), "Arch Linux x86_64, Ubuntu")
     def_host = next((x["value"] for x in sys_info if x["key"] == "Host"), "Workstation")
     def_kernel = next((x["value"] for x in sys_info if x["key"] == "Kernel"), "Systems, SQA & Robotics")
     def_ide = next((x["value"] for x in sys_info if x["key"] == "IDE"), "Neovim, VSCode")
     def_shell = next((x["value"] for x in sys_info if x["key"] == "Shell"), "zsh 5.9")
+    uptime_start = telemetry.get("uptime_start_date", "2020-09-20")
 
-    os_val = prompt_text("OS", default=def_os)
-    host_val = prompt_text("Host", default=def_host)
-    kernel_val = prompt_text("Kernel / Role", default=def_kernel)
-    ide_val = prompt_text("IDE", default=def_ide)
-    shell_val = prompt_text("Shell", default=def_shell)
-
-    new_sys_info = [
-        {"key": "OS", "value": os_val},
-        {"key": "Host", "value": host_val},
-        {"key": "Kernel", "value": kernel_val},
-        {"key": "IDE", "value": ide_val},
-        {"key": "Shell", "value": shell_val},
+    fields = [
+        {"key": "Prompt Header", "value": prompt_hdr},
+        {"key": "OS", "value": def_os},
+        {"key": "Host", "value": def_host},
+        {"key": "Kernel / Role", "value": def_kernel},
+        {"key": "IDE", "value": def_ide},
+        {"key": "Shell", "value": def_shell},
+        {"key": "Uptime Start Date", "value": uptime_start},
     ]
 
-    telemetry = current_config.get("telemetry", {})
-    uptime_start = prompt_text(
-        "Uptime Start Date (YYYY-MM-DD) [First commit / birthdate]",
-        default=telemetry.get("uptime_start_date", "2020-09-20")
-    )
-    telemetry["uptime_start_date"] = uptime_start
+    if not tui.is_tty or tui.fd is None:
+        user_info["prompt_header"] = prompt_hdr
+        return user_info, [
+            {"key": "OS", "value": def_os},
+            {"key": "Host", "value": def_host},
+            {"key": "Kernel", "value": def_kernel},
+            {"key": "IDE", "value": def_ide},
+            {"key": "Shell", "value": def_shell},
+        ], telemetry
+
+    cursor = 0
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+        btn_cont_idx = len(fields)
+        total_items = len(fields) + 1
+
+        lines = [
+            f"{AMBER}{BOLD}=== [Step 3/5] System Specs & Bio Telemetry ==={RESET}",
+            f"{MUTED}Customize the Neofetch prompt and system specs. Press [Enter] to edit, [c] to continue.{RESET}",
+            f"{MUTED}{'─' * (cols - 2)}{RESET}",
+        ]
+
+        for idx, f in enumerate(fields):
+            is_active = (cursor == idx)
+            arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+            k_str = f"{BOLD}{CYAN if is_active else WHITE}{f['key']:<20}{RESET}"
+            lines.append(f"{arrow} {k_str}: {f['value']}")
+
+        lines.append("")
+        is_cont_active = (cursor == btn_cont_idx)
+        cont_arrow = f"{GREEN}{BOLD}❯{RESET}" if is_cont_active else " "
+        cont_btn = f"{GREEN}{BOLD}[ Continue to Contacts -> ]{RESET}" if is_cont_active else f"{MUTED}[ Continue to Contacts -> ]{RESET}"
+        lines.append(f"{cont_arrow} {cont_btn}")
+
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Edit  {BOLD}[c]{RESET} Continue")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key in ("j", "DOWN"):
+            cursor = min(total_items - 1, cursor + 1)
+        elif key in ("k", "UP"):
+            cursor = max(0, cursor - 1)
+        elif key in ("c", "C"):
+            break
+        elif key == "ENTER":
+            if cursor == btn_cont_idx:
+                break
+            elif 0 <= cursor < len(fields):
+                f = fields[cursor]
+                f["value"] = prompt_line_editor(tui, f"Edit {f['key']}", f['key'], f["value"])
+
+    # Compile result structures
+    user_info["prompt_header"] = fields[0]["value"]
+    compiled_sys_info = [
+        {"key": "OS", "value": fields[1]["value"]},
+        {"key": "Host", "value": fields[2]["value"]},
+        {"key": "Kernel", "value": fields[3]["value"]},
+        {"key": "IDE", "value": fields[4]["value"]},
+        {"key": "Shell", "value": fields[5]["value"]},
+    ]
+    telemetry["uptime_start_date"] = fields[6]["value"]
     telemetry["show_uptime"] = True
     telemetry["show_github_stats"] = True
     telemetry["show_loc"] = True
 
-    return user_info, new_sys_info, telemetry
+    return user_info, compiled_sys_info, telemetry
 
 
-def setup_contacts(current_config: dict) -> list[dict]:
-    print(f"\n{GREEN}{BOLD}[4/5] Contact Links{RESET}")
-    print(f"{MUTED}Provide the contact handles to display.{RESET}\n")
+# ==============================================================================
+# Step 4: Contact Handles (hjkl navigation, edit, add, delete)
+# ==============================================================================
 
-    contacts = current_config.get("contacts", [])
-    def_email = next((x["value"] for x in contacts if x["label"] == "Email"), "muhammed.humam.hossain@gmail.com")
-    def_linkedin = next((x["value"] for x in contacts if x["label"] == "LinkedIn"), "in/humam-hossain-7ab762230")
-    def_portfolio = next((x["value"] for x in contacts if x["label"] == "Portfolio"), "humam-hossain.github.io")
+def setup_contacts_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
+    """Configures contact links with hjkl navigation."""
+    contacts = [dict(c) for c in current_config.get("contacts", [
+        {"label": "Email", "value": "muhammed.humam.hossain@gmail.com", "url": "mailto:muhammed.humam.hossain@gmail.com"},
+        {"label": "LinkedIn", "value": "in/humam-hossain-7ab762230", "url": "https://www.linkedin.com/in/humam-hossain-7ab762230/"},
+        {"label": "Portfolio", "value": "humam-hossain.github.io", "url": "https://github.com/humam-hossain"},
+    ])]
 
-    email_val = prompt_text("Email Address", default=def_email)
-    linkedin_val = prompt_text("LinkedIn Handle / Profile", default=def_linkedin)
-    portfolio_val = prompt_text("Website / Portfolio Handle", default=def_portfolio)
+    if not tui.is_tty or tui.fd is None:
+        return contacts
 
-    new_contacts = [
-        {"label": "Email", "value": email_val, "url": f"mailto:{email_val}"},
-        {"label": "LinkedIn", "value": linkedin_val, "url": f"https://www.linkedin.com/{linkedin_val}"},
-        {"label": "Portfolio", "value": portfolio_val, "url": f"https://{portfolio_val}"},
-    ]
+    cursor = 0
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+        btn_add_idx = len(contacts)
+        btn_cont_idx = len(contacts) + 1
+        total_items = len(contacts) + 2
 
-    if prompt_yes_no("Add a Discord or Telegram handle?", default=False):
-        label = prompt_text("Service Name (e.g. Discord, Telegram, X)")
-        val = prompt_text(f"Handle for '{label}'")
-        if label and val:
-            new_contacts.append({"label": label, "value": val, "url": f"https://github.com/{val}"})
-
-    return new_contacts
-
-
-def setup_ascii_art() -> list[str]:
-    print(f"\n{GREEN}{BOLD}[5/5] ASCII Art Selection (Left Column){RESET}")
-    print(f"{MUTED}Choose your terminal artwork style:{RESET}")
-    print(f"  {CYAN}1.{RESET} Arch Linux Logo (authentic Unix neofetch)")
-    print(f"  {CYAN}2.{RESET} Monogram Banner (HUMAM HOSSAIN // WORKSTATION)")
-    print(f"  {CYAN}3.{RESET} Custom (paste your own lines in profile_config.json)\n")
-
-    choice = prompt_text("Select ASCII style [1-3]", default="1")
-    if choice == "2":
-        return [
-            "   ▄▄     ▄▄   ",
-            "   ██     ██   ",
-            "   ██     ██   ",
-            "   █████████   ",
-            "   █████████   ",
-            "   ██     ██   ",
-            "   ██     ██   ",
-            "   ▀▀     ▀▀ _ ",
-            "               ",
-            "  HUMAM HOSSAIN",
-            "  ============= ",
-            "  [AI & ROBOT] ",
-            "  arch-linux-64",
-            "  workstation  ",
+        lines = [
+            f"{AMBER}{BOLD}=== [Step 4/5] Contact Handles ==={RESET}",
+            f"{MUTED}Provide the handles to show in your profile. Press [Enter] to edit, [a] to add, [d] to delete.{RESET}",
+            f"{MUTED}{'─' * (cols - 2)}{RESET}",
         ]
-    return [
-        "                   -`                 ",
-        "                  .o+`                ",
-        "                 `ooo/                ",
-        "                `+oooo:               ",
-        "               `+oooooo:              ",
-        "               -+oooooo+:             ",
-        "             `/:-:++oooo+:            ",
-        "            `/++++/+++++++:           ",
-        "           `/++++++++++++++:          ",
-        "          `/+++ooooooooooooo/`        ",
-        "         ./ooosssso++osssssso+`       ",
-        "        .oossssso-````/ossssss+`      ",
-        "       -osssssso.      :ssssssso.     ",
-        "      :osssssss/        osssso+++.    ",
-        "     /ossssssss/        +ssssooo/-    ",
-        "   `/ossssso+/:-        -:/+osssso+-  ",
-        "  `+sso+:-`                 `.-/+oso: ",
-        " `++:.                           `-/+/",
-        " .`                                 `/",
-        "                                      ",
-        "         HUMAM HOSSAIN // WORKSTATION ",
-        "         ============================ ",
-        "         [AI & ROBOTICS / SYSTEMS]    ",
-        "                                      ",
-        "            github.com/humam-hossain  ",
+
+        for idx, c in enumerate(contacts):
+            is_active = (cursor == idx)
+            arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+            lbl = f"{BOLD}{CYAN if is_active else WHITE}{c.get('label'):<12}{RESET}"
+            lines.append(f"{arrow} {lbl}: {c.get('value')} ({c.get('url', '')})")
+
+        lines.append("")
+        is_add_active = (cursor == btn_add_idx)
+        add_arrow = f"{AMBER}{BOLD}❯{RESET}" if is_add_active else " "
+        add_btn = f"{AMBER}{BOLD}[ + Add New Handle ]{RESET}" if is_add_active else f"{MUTED}[ + Add New Handle ]{RESET}"
+        lines.append(f"{add_arrow} {add_btn}")
+
+        is_cont_active = (cursor == btn_cont_idx)
+        cont_arrow = f"{GREEN}{BOLD}❯{RESET}" if is_cont_active else " "
+        cont_btn = f"{GREEN}{BOLD}[ Continue to ASCII Art -> ]{RESET}" if is_cont_active else f"{MUTED}[ Continue to ASCII Art -> ]{RESET}"
+        lines.append(f"{cont_arrow} {cont_btn}")
+
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Edit  {BOLD}[a]{RESET} Add  {BOLD}[d]{RESET} Delete  {BOLD}[c]{RESET} Continue")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key in ("j", "DOWN"):
+            cursor = min(total_items - 1, cursor + 1)
+        elif key in ("k", "UP"):
+            cursor = max(0, cursor - 1)
+        elif key in ("c", "C"):
+            break
+        elif key in ("a", "A"):
+            label = prompt_line_editor(tui, "Add Contact", "Platform Label (e.g. Discord, Telegram, X)", "Discord")
+            val = prompt_line_editor(tui, f"Add {label} Handle", f"Handle / Username for {label}", "")
+            if label and val:
+                url = f"mailto:{val}" if label.lower() == "email" else f"https://github.com/{val}"
+                contacts.append({"label": label, "value": val, "url": url})
+                cursor = len(contacts) - 1
+        elif key in ("d", "D", "x"):
+            if 0 <= cursor < len(contacts) and len(contacts) > 1:
+                contacts.pop(cursor)
+                cursor = min(cursor, len(contacts) - 1)
+        elif key == "ENTER":
+            if cursor == btn_cont_idx:
+                break
+            elif cursor == btn_add_idx:
+                label = prompt_line_editor(tui, "Add Contact", "Platform Label (e.g. Discord, Telegram, X)", "Discord")
+                val = prompt_line_editor(tui, f"Add {label} Handle", f"Handle / Username for {label}", "")
+                if label and val:
+                    url = f"mailto:{val}" if label.lower() == "email" else f"https://github.com/{val}"
+                    contacts.append({"label": label, "value": val, "url": url})
+            elif 0 <= cursor < len(contacts):
+                c = contacts[cursor]
+                c["value"] = prompt_line_editor(tui, f"Edit {c['label']}", c["label"], c["value"])
+                if c["label"].lower() == "email":
+                    c["url"] = f"mailto:{c['value']}"
+                elif "linkedin" in c["label"].lower():
+                    clean_in = c["value"].strip("/").replace("in/", "")
+                    c["url"] = f"https://www.linkedin.com/in/{clean_in}/"
+                elif "portfolio" in c["label"].lower() or "web" in c["label"].lower():
+                    clean_web = c["value"].replace("https://", "").replace("http://", "").strip("/")
+                    c["url"] = f"https://{clean_web}"
+
+    return contacts
+
+
+# ==============================================================================
+# Step 5: ASCII Art Selection (Live Preview with hjkl)
+# ==============================================================================
+
+ARCH_ASCII = [
+    "                   -`                 ",
+    "                  .o+`                ",
+    "                 `ooo/                ",
+    "                `+oooo:               ",
+    "               `+oooooo:              ",
+    "               -+oooooo+:             ",
+    "             `/:-:++oooo+:            ",
+    "            `/++++/+++++++:           ",
+    "           `/++++++++++++++:          ",
+    "          `/+++ooooooooooooo/`        ",
+    "         ./ooosssso++osssssso+`       ",
+    "        .oossssso-````/ossssss+`      ",
+    "       -osssssso.      :ssssssso.     ",
+    "      :osssssss/        osssso+++.    ",
+    "     /ossssssss/        +ssssooo/-    ",
+    "   `/ossssso+/:-        -:/+osssso+-  ",
+    "  `+sso+:-`                 `.-/+oso: ",
+    " `++:.                           `-/+/",
+    " .`                                 `/",
+    "                                      ",
+    "         HUMAM HOSSAIN // WORKSTATION ",
+    "         ============================ ",
+    "         [AI & ROBOTICS / SYSTEMS]    ",
+    "                                      ",
+    "            github.com/humam-hossain  ",
+]
+
+MONOGRAM_ASCII = [
+    "   ▄▄     ▄▄   ",
+    "   ██     ██   ",
+    "   ██     ██   ",
+    "   █████████   ",
+    "   █████████   ",
+    "   ██     ██   ",
+    "   ██     ██   ",
+    "   ▀▀     ▀▀ _ ",
+    "               ",
+    "  HUMAM HOSSAIN",
+    "  ============= ",
+    "  [AI & ROBOT] ",
+    "  arch-linux-64",
+    "  workstation  ",
+]
+
+
+def select_ascii_art_tui(tui: TerminalUI, current_config: dict) -> list[str]:
+    """Allows selecting ASCII art style with real-time preview."""
+    existing_custom = current_config.get("ascii_art", ARCH_ASCII)
+    options = [
+        {"name": "Arch Linux Logo (Authentic Unix Neofetch)", "lines": ARCH_ASCII},
+        {"name": "Monogram Banner (HUMAM HOSSAIN // WORKSTATION)", "lines": MONOGRAM_ASCII},
+        {"name": "Custom Artwork (Keep current from profile_config.json)", "lines": existing_custom},
     ]
 
+    if not tui.is_tty or tui.fd is None:
+        return options[0]["lines"]
+
+    cursor = 0
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+
+        lines = [
+            f"{AMBER}{BOLD}=== [Step 5/5] ASCII Art Selection (Left Column) ==={RESET}",
+            f"{MUTED}Switch style with [j/k or ↑/↓]. Preview updates below. Press [Enter] to build profile.{RESET}",
+            f"{MUTED}{'─' * (cols - 2)}{RESET}",
+        ]
+
+        for idx, opt in enumerate(options):
+            is_active = (cursor == idx)
+            arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+            bullet = f"{GREEN}[*]{RESET}" if is_active else f"{MUTED}[ ]{RESET}"
+            name = f"{BOLD}{CYAN if is_active else WHITE}{opt['name']}{RESET}"
+            lines.append(f"{arrow} {bullet} {name}")
+
+        lines.append("")
+        lines.append(f"{AMBER}{BOLD}--- Live Preview ---{RESET}")
+        preview_lines = options[cursor]["lines"]
+        for p_line in preview_lines[:15]:
+            lines.append(f"{CYAN}{p_line}{RESET}")
+
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Switch Style  {BOLD}[Enter]{RESET} Select & Build Profile")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key in ("j", "DOWN"):
+            cursor = (cursor + 1) % len(options)
+        elif key in ("k", "UP"):
+            cursor = (cursor - 1) % len(options)
+        elif key == "ENTER":
+            return options[cursor]["lines"]
+
+
+# ==============================================================================
+# Main Execution Pipeline
+# ==============================================================================
 
 def main() -> int:
-    print_banner()
+    # Handle help or non-interactive flags
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(f"{BOLD}Usage:{RESET} python3 scripts/configure_profile.py [--non-interactive]")
+        print("Interactive setup wizard with hjkl Vim navigation and latest-committed repo sorting.")
+        return 0
 
     current_config = {}
     if CONFIG_PATH.is_file():
@@ -318,20 +909,42 @@ def main() -> int:
 
     username = current_config.get("user", {}).get("username", "humam-hossain")
 
-    # 1. Projects
-    featured_projects = setup_projects(current_config, username)
+    # Fetch repositories ordered by latest commit
+    print(f"\n{CYAN}Fetching public repositories for @{username} sorted by latest commit...{RESET}")
+    repos = fetch_user_repos(username)
+    if not repos:
+        # Fallback dummy list if offline or rate-limited
+        repos = [
+            {"name": "adb-permission-manager", "description": "Android permissions controller", "pushed_at": "2026-11-09", "language": "Python", "stars": 0},
+            {"name": "Voice", "description": "Desktop push-to-talk STT/TTS", "pushed_at": "2026-11-03", "language": "Python", "stars": 0},
+            {"name": "greeclimate", "description": "Gree minisplit HVAC controller", "pushed_at": "2026-10-17", "language": "Python", "stars": 0},
+            {"name": "dots-hyprland", "description": "Usability-first dotfiles", "pushed_at": "2026-10-11", "language": "QML", "stars": 0},
+            {"name": "antigravity-cli-statusline", "description": "Terminal statusline plugin", "pushed_at": "2026-08-14", "language": "Shell", "stars": 0},
+        ]
 
-    # 2. Skills
-    skills = setup_skills(current_config)
+    current_featured = current_config.get("featured_projects", [])
+    current_selected_names = [p.get("repo") for p in current_featured if p.get("repo")]
+    if not current_selected_names:
+        current_selected_names = [r["name"] for r in repos[:4]]
 
-    # 3. System Info & Telemetry
-    user_info, system_info, telemetry = setup_system_info(current_config)
+    with TerminalUI() as tui:
+        # 1. Select Projects (hjkl multi-select list ordered by latest commit)
+        chosen_repos = select_projects_tui(tui, repos, current_selected_names)
 
-    # 4. Contacts
-    contacts = setup_contacts(current_config)
+        # 1b. Project Descriptions
+        featured_projects = edit_project_descriptions_tui(tui, chosen_repos, current_featured)
 
-    # 5. ASCII Art
-    ascii_art = setup_ascii_art()
+        # 2. Skills Categories
+        skills = setup_skills_tui(tui, current_config)
+
+        # 3. System Telemetry & Specs
+        user_info, system_info, telemetry = setup_system_info_tui(tui, current_config)
+
+        # 4. Contacts
+        contacts = setup_contacts_tui(tui, current_config)
+
+        # 5. ASCII Art Style
+        ascii_art = select_ascii_art_tui(tui, current_config)
 
     # Compile new config
     new_config = {
@@ -349,17 +962,16 @@ def main() -> int:
         json.dump(new_config, f, indent=2)
 
     print(f"\n{GREEN}{BOLD}✓ Saved configuration to {CONFIG_PATH}{RESET}")
-    print(f"{CYAN}Compiling dark_mode.svg, light_mode.svg, and README.md...{RESET}")
+    print(f"{CYAN}Compiling dark_mode.svg, light_mode.svg, and README.md...{RESET}\n")
 
     # Build profile SVGs
-    import subprocess
-    res = subprocess.run([sys.executable, str(ROOT_DIR / "scripts" / "build_profile.py")])
+    res = subprocess.run([sys.executable, str(BUILD_SCRIPT)])
     if res.returncode == 0:
-        print(f"\n{GREEN}{BOLD}🎉 Success! Your profile SVGs and README.md have been regenerated.{RESET}")
-        print(f"{MUTED}You can re-run this setup wizard anytime with:{RESET}")
+        print(f"\n{GREEN}{BOLD}🎉 Success! Profile rebuilt with your custom selections.{RESET}")
+        print(f"{MUTED}You can re-launch this wizard anytime using:{RESET}")
         print(f"  {BOLD}python3 scripts/configure_profile.py{RESET}\n")
     else:
-        print(f"{RED}Build failed. Check scripts/build_profile.py output above.{RESET}")
+        print(f"{RED}Build failed. Check scripts/build_profile.py error output.{RESET}")
         return res.returncode
 
     return 0

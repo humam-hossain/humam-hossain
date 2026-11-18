@@ -58,10 +58,10 @@ text, tspan {white-space: pre;}
 <tspan x="390" y="250" class="cc">. </tspan><tspan class="key">Technologies.SQA</tspan>:<tspan class="cc"> .......... </tspan><tspan class="value">PyTest, Jest, Static Analysis</tspan>
 <tspan x="390" y="270" class="cc">. </tspan>
 <tspan x="390" y="290">- Featured Projects -————————————————————————————————————-—-</tspan>
-<tspan x="390" y="310" class="cc">. </tspan><tspan class="key">linux_shell_scripting</tspan>:<tspan class="cc"> </tspan><tspan class="value">Unix automation scripts &amp; utilities</tspan>
-<tspan x="390" y="330" class="cc">. </tspan><tspan class="key">Python</tspan>:<tspan class="cc"> .................. </tspan><tspan class="value">Robotics tools, algorithms &amp; CV</tspan>
-<tspan x="390" y="350" class="cc">. </tspan><tspan class="key">nn</tspan>:<tspan class="cc"> ....................... </tspan><tspan class="value">C neural network engine &amp; math</tspan>
-<tspan x="390" y="370" class="cc">. </tspan><tspan class="key">antigravity-cli-statusline</tspan>:<tspan class="cc">  </tspan><tspan class="value">Terminal statusline telemetry</tspan>
+<tspan x="390" y="310" class="cc">. </tspan><tspan class="key">humam-hossain</tspan>:<tspan class="cc"> ................................. </tspan><tspan class="value">Portfolio</tspan>
+<tspan x="390" y="330" class="cc">. </tspan><tspan class="key">adb-permission-manager</tspan>:<tspan class="cc"> </tspan><tspan class="value">Audit and control Android runtime permissions &amp; hidden AppOps via ADB. Save hardware-tied JSON profiles with automated drift detection. No root required.</tspan>
+<tspan x="390" y="350" class="cc">. </tspan><tspan class="key">.dotfiles</tspan>:<tspan class="cc"> ......................... </tspan><tspan class="value">Unix software &amp; tools</tspan>
+<tspan x="390" y="370" class="cc">. </tspan><tspan class="key">Voice</tspan>:<tspan class="cc"> </tspan><tspan class="value">Desktop-global push-to-talk STT and TTS hotkeys for Linux</tspan>
 <tspan x="390" y="390" class="cc">. </tspan>
 <tspan x="390" y="410">- Contact -——————————————————————————————————————————————-—-</tspan>
 <tspan x="390" y="430" class="cc">. </tspan><tspan class="key">Email</tspan>:<tspan class="cc"> .................. </tspan><tspan class="value">muhammed.humam.hossain@gmail.com</tspan>
