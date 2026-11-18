@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/hero.svg?v=20261117" alt="humam@workstation" width="100%" />
+  <img src="./assets/hero.svg?v=20261118" alt="humam@workstation" width="100%" />
 </div>
 
 <div align="center">
@@ -14,7 +14,7 @@
 
 <!-- PROJECTS:START -->
 <div align="center">
-  <img src="./assets/projects.svg?v=20261117" alt="Open Source Projects Dashboard" width="100%" />
+  <img src="./assets/projects.svg?v=20261118" alt="Open Source Projects Dashboard" width="100%" />
 </div>
 
 <div align="center">
@@ -24,7 +24,7 @@
 
 <!-- METRICS:START -->
 <div align="center">
-  <img src="./assets/metrics.svg?v=20261117" alt="Languages, Streaks & Metrics" width="100%" />
+  <img src="./assets/metrics.svg?v=20261118" alt="Languages, Streaks & Metrics" width="100%" />
 </div>
 
 <div align="left">
@@ -38,7 +38,7 @@
 
 <!-- SKILLS:START -->
 <div align="center">
-  <img src="./assets/skills.svg?v=20261117" alt="Categorized Skills Matrix" width="100%" />
+  <img src="./assets/skills.svg?v=20261118" alt="Categorized Skills Matrix" width="100%" />
 </div>
 <!-- SKILLS:END -->
 
