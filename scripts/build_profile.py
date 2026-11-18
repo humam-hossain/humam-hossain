@@ -547,6 +547,10 @@ def update_readme(username: str) -> None:
 
 
 def main() -> int:
+    if "--configure" in sys.argv or "--wizard" in sys.argv:
+        from scripts.configure_profile import main as wizard_main
+        return wizard_main()
+
     log_info("Starting Andrew6rant Neofetch Profile Builder...")
 
     if not CONFIG_PATH.is_file():
