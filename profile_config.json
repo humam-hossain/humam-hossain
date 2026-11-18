@@ -1,0 +1,49 @@
+{
+  "user": {
+    "username": "humam-hossain",
+    "name": "Muhammed Humam Hossain",
+    "prompt_header": "humam@workstation"
+  },
+  "system_info": [
+    { "key": "OS", "value": "Arch Linux x86_64, Ubuntu" },
+    { "key": "Host", "value": "Workstation" },
+    { "key": "Kernel", "value": "Systems, SQA & Robotics" },
+    { "key": "IDE", "value": "Neovim, VSCode" },
+    { "key": "Shell", "value": "zsh 5.9" }
+  ],
+  "skills": [
+    { "category": "Languages.Code", "items": "Python, C/C++, Bash, JavaScript" },
+    { "category": "Languages.Systems", "items": "Linux, Docker, Git, CI/CD" },
+    { "category": "Technologies.AI", "items": "PyTorch, OpenCV, ROS2, Gazebo" },
+    { "category": "Technologies.SQA", "items": "PyTest, Jest, Static Analysis" }
+  ],
+  "featured_projects": [
+    {
+      "repo": "linux_shell_scripting",
+      "description": "Unix automation scripts & utilities"
+    },
+    {
+      "repo": "Python",
+      "description": "Robotics tools, algorithms & CV"
+    },
+    {
+      "repo": "nn",
+      "description": "C neural network engine & math"
+    },
+    {
+      "repo": "antigravity-cli-statusline",
+      "description": "Terminal statusline telemetry"
+    }
+  ],
+  "contacts": [
+    { "label": "Email", "value": "muhammed.humam.hossain@gmail.com", "url": "mailto:muhammed.humam.hossain@gmail.com" },
+    { "label": "LinkedIn", "value": "in/humam-hossain-7ab762230", "url": "https://www.linkedin.com/in/humam-hossain-7ab762230/" },
+    { "label": "Portfolio", "value": "humam-hossain.github.io", "url": "https://github.com/humam-hossain" }
+  ],
+  "telemetry": {
+    "show_uptime": true,
+    "uptime_start_date": "2020-09-20",
+    "show_github_stats": true,
+    "show_loc": true
+  }
+}

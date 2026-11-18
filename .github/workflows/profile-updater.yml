@@ -1,18 +1,9 @@
 # ==============================================================================
-# Terminal Profile Telemetry Sync Workflow
+# Andrew6rant-Style Terminal Profile Telemetry Sync Workflow
 # Muhammed Humam Hossain (@humam-hossain)
 #
 # Daily automation pipeline for self-updating terminal GitHub Profile README.
 # Infrastructure Cost: $0.00 (Zero paid services, 100% official GitHub Actions)
-#
-# Inactivity Notice: GitHub automatically disables scheduled workflows after 60
-# days of repository inactivity. Because hero.svg updates daily coding uptime,
-# this workflow commits daily, keeping the repository continuously active.
-# To manually re-enable if ever paused: gh workflow enable profile-updater.yml
-#
-# Branch Protection Ruleset Notice:
-# If 'main' branch protection or rulesets are enabled, grant 'github-actions[bot]'
-# bypass permissions under Settings > Rules > Rulesets > Bypass List.
 # ==============================================================================
 
 name: Profile Telemetry Sync
@@ -21,7 +12,7 @@ run-name: "Profile Telemetry Sync (${{ github.event_name }})"
 
 "on":
   schedule:
-    # 00:17 UTC daily - avoids top-of-hour runner allocation congestion (D-01)
+    # 00:17 UTC daily - avoids top-of-hour runner allocation congestion
     - cron: '17 0 * * *'
   workflow_dispatch:
     inputs:
@@ -30,34 +21,25 @@ run-name: "Profile Telemetry Sync (${{ github.event_name }})"
         required: false
         default: false
         type: boolean
-      force_refresh:
-        description: 'Force refresh feeds (bypass 12h article cache)'
-        required: false
-        default: false
-        type: boolean
   push:
     branches:
       - main
     paths:
       - 'scripts/**'
-      - 'config/**'
-      - 'templates/**'
+      - 'profile_config.json'
       - '.github/workflows/profile-updater.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'scripts/**'
-      - 'config/**'
-      - 'templates/**'
+      - 'profile_config.json'
       - '.github/workflows/profile-updater.yml'
 
-# Concurrency serialization: prevent race conditions without killing in-flight jobs (D-03)
 concurrency:
   group: profile-telemetry-sync
   cancel-in-progress: false
 
-# Granular least-privilege permissions (D-13)
 permissions:
   contents: write
   pull-requests: read
@@ -103,44 +85,19 @@ jobs:
 
       - name: "🚀 Execute Profile Telemetry Engine"
         id: run-engine
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_DRY_RUN: ${{ inputs.dry_run }}
-          INPUT_FORCE_REFRESH: ${{ inputs.force_refresh }}
-          IS_DEBUG: ${{ runner.debug }}
         run: |
-          ARGS=()
-          
-          # Pass --refresh if requested via workflow_dispatch
-          if [ "$INPUT_FORCE_REFRESH" = "true" ]; then
-            ARGS+=("--refresh")
-          fi
-          
-          # Pass --dry-run for pull requests or manual dry-run dispatches
-          if [ "$EVENT_NAME" = "pull_request" ] || [ "$INPUT_DRY_RUN" = "true" ]; then
-            ARGS+=("--dry-run")
-          fi
-          
-          # Pass --verbose when debug logging is enabled
-          if [ "$IS_DEBUG" = "1" ]; then
-            ARGS+=("--verbose")
-          fi
-          
-          python -u scripts/update_profile.py "${ARGS[@]}"
+          python -u scripts/build_profile.py
 
       - name: "🛡️ Validate Asset Integrity"
         run: |
-          # Verify all SVGs exist, parse as valid XML, and meet size threshold (>500B)
           python - << 'EOF'
           import sys
           from pathlib import Path
           import xml.etree.ElementTree as ET
 
           svg_files = [
-              Path("assets/hero.svg"),
-              Path("assets/projects.svg"),
-              Path("assets/metrics.svg"),
-              Path("assets/skills.svg"),
+              Path("dark_mode.svg"),
+              Path("light_mode.svg"),
           ]
 
           for svg in svg_files:
@@ -157,62 +114,32 @@ jobs:
                   print(f"[FAIL] Malformed XML in {svg}: {e}", file=sys.stderr)
                   sys.exit(1)
 
-          # Verify README section markers
           readme_content = Path("README.md").read_text(encoding="utf-8")
-          required_markers = [
-              ("<!-- PROJECTS:START -->", "<!-- PROJECTS:END -->"),
-              ("<!-- METRICS:START -->", "<!-- METRICS:END -->"),
-              ("<!-- SKILLS:START -->", "<!-- SKILLS:END -->"),
-              ("<!-- BLOG:START -->", "<!-- BLOG:END -->"),
-          ]
+          if "<picture>" not in readme_content or "dark_mode.svg" not in readme_content:
+              print("[FAIL] Missing <picture> embed in README.md", file=sys.stderr)
+              sys.exit(1)
 
-          for start, end in required_markers:
-              if start not in readme_content or end not in readme_content:
-                  print(f"[FAIL] Missing README marker pair: {start} ... {end}", file=sys.stderr)
-                  sys.exit(1)
-
-          print("[OK] All SVG assets and README markers verified successfully.")
+          print("[OK] All SVG assets and README verified successfully.")
           EOF
 
       - name: "🚀 Commit and push updated profile assets"
         if: success() && github.event_name != 'pull_request' && inputs.dry_run != true
-        env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          # 1. Normalize file permissions before staging (D-20)
-          chmod 644 assets/*.svg README.md data/cache.json 2>/dev/null || true
+          chmod 644 dark_mode.svg light_mode.svg README.md data/cache.json 2>/dev/null || true
+          git add dark_mode.svg light_mode.svg assets/*.svg README.md data/cache.json 2>/dev/null || true
 
-          # 2. Stage target generated files (D-19)
-          git add assets/*.svg README.md data/cache.json
-
-          # 3. Check for unexpected untracked files (informational audit D-29)
-          UNTRACKED=$(git ls-files --others --exclude-standard)
-          if [ -n "$UNTRACKED" ]; then
-            echo "[WARN] Untracked files present in workspace:"
-            echo "$UNTRACKED"
-          fi
-
-          # 4. Check if user-facing profile assets changed (D-21, D-22)
-          if git diff --cached --quiet -- assets/*.svg README.md; then
+          if git diff --cached --quiet -- dark_mode.svg light_mode.svg README.md; then
             echo "[INFO] No user-facing profile changes detected. Skipping commit."
             git reset --quiet HEAD
             exit 0
           fi
 
-          # 5. Display concise change summary (D-30)
           echo "[INFO] Staged changes for commit:"
           git status -s
           git diff --cached --stat
 
-          # 6. Commit using Python-generated commit message (D-16, D-17, D-18)
-          if [ -f .git/COMMIT_MSG_TMP ]; then
-            git commit --no-verify -F .git/COMMIT_MSG_TMP
-            rm -f .git/COMMIT_MSG_TMP
-          else
-            git commit --no-verify -m "chore(profile): auto-sync terminal telemetry [skip ci]"
-          fi
+          git commit --no-verify -m "chore(profile): auto-sync neofetch telemetry [skip ci]"
 
-          # 7. Resilient push with rebase autostash and exponential backoff (D-23, D-24, D-25)
           MAX_RETRIES=3
           BACKOFF=(2 5 10)
           PUSH_SUCCESS=0
@@ -244,14 +171,3 @@ jobs:
             echo "[ERROR] Failed to push to origin/main after $MAX_RETRIES attempts." >&2
             exit 1
           fi
-
-      - name: "📦 Upload debug artifacts on failure"
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: profile-sync-debug
-          path: |
-            assets/*.svg
-            data/cache.json
-            README.md
-          retention-days: 7

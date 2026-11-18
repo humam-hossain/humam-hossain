@@ -1,93 +1,74 @@
-# Requirements: Terminal-Themed GitHub Profile README (humam-hossain)
+# Requirements: Milestone v2.0 Andrew6rant-Style Neofetch Redesign
 
-**Defined:** 2026-11-06
-**Core Value:** Every single profile component must strictly adhere to the same unified terminal design language (dark terminal background, monospace typography, terminal box borders, ANSI syntax colors) while keeping all live metrics automatically refreshed via free GitHub Actions.
+## Overview
 
-## v1 Requirements
+Overhaul the profile repository to adhere to Andrew6rant's proven, single-card Neofetch terminal architecture with native dual-theme support, user-driven configuration, and real GitHub telemetry.
 
-Requirements for initial release. Each maps to roadmap phases.
+## Requirements
 
-### Hero & Identity (HERO)
+### Configuration & Data Control
 
-- [x] **HERO-01**: Dual-theme SVG Hero card with stylized block monogram ASCII typography (`H-` / `HH`) on the left panel
-- [x] **HERO-02**: Terminal telemetry on the right panel (`humam@workstation`, OS: `Arch Linux`, Kernel: `Systems | AI & Robotics`, Focus: `Autonomous Systems & Backend`, Contact: email & LinkedIn)
-- [x] **HERO-03**: Dual theme support via `<picture>` and `(prefers-color-scheme: dark)` for seamless GitHub dark/light mode switching
-- [x] **HERO-04**: Dynamic "Coding Uptime" calculation evaluating elapsed duration (`X yrs, Y mos, Z days`) from first GitHub commit to present
-- [x] **HERO-05**: Dynamic aggregate Lines of Code (LOC) counter displaying total additions (`++`) and deletions (`--`) across repositories
+- [ ] **CONF-01**: User configuration file `profile_config.json` created with clear schema for:
+  - System info (`os`, `uptime_mode`, `host`, `kernel`, `ide`)
+  - Categorized skills (`Languages.Code`, `Languages.Tools`, etc.)
+  - Featured projects list with user-specified project names, descriptions, and metrics
+  - Contact links (`Email`, `LinkedIn`, `Portfolio`)
+  - Telemetry overrides and display toggles
+- [ ] **CONF-02**: Python script `scripts/build_profile.py` that reads `profile_config.json` and compiles both theme SVGs cleanly.
 
-### Open Source & Projects Showcase (PROJ)
+### Dual-Theme Neofetch Vector Engine
 
-- [x] **PROJ-01**: Live Open Source Projects Dashboard displaying real-time Stars (⭐), Forks (🍴), Open Issues (🛎️), and Open Pull Requests (📬)
-- [x] **PROJ-02**: Configurable repository selection enabling user to pin specific repositories (e.g., KRPC robotics, homeserver, IoT environmental monitor) with automatic fallback to top active repos
-- [x] **PROJ-03**: Terminal-box styling (`┌───┐`, `│`, `└───┘` or terminal window card) adhering to dark terminal palette
+- [ ] **NEO-01**: `dark_mode.svg` generated matching Andrew6rant's exact dimensions, typography (`Consolas`, monospace), and color palette:
+  - Background `#161b22`, border radius `15px`
+  - Zero traffic lights / window chrome
+  - Left column: crisp monospace ASCII art monogram / terminal art
+  - Right column: `humam@workstation` header line, dot-leader aligned key-values (`. Key: ........ Value`)
+  - Section dividers (`- Section -————————————————————`)
+  - Key fill `#ffa657`, value fill `#a5d6ff`, dot fill `#616e7f`
+- [ ] **NEO-02**: `light_mode.svg` generated matching GitHub light theme:
+  - Background `#f6f8fa`, border radius `15px`
+  - Zero traffic lights / window chrome
+  - Left column: matching ASCII art in dark text `#24292f`
+  - Right column: matching dot-leader layout
+  - Key fill `#953800`, value fill `#0a3069`, dot fill `#c2cfde`, text `#24292f`
 
-### Metrics, Languages & Activity (METRIC)
+### Dynamic Telemetry & Live Stats
 
-- [x] **METRIC-01**: Top Languages breakdown calculated from public repositories and rendered as a terminal horizontal progress bar
-- [x] **METRIC-02**: Commit Streak & Contribution Stats card customized strictly to match terminal palette (`#161b22`, amber `#ffa657`, green `#3fb950`)
-- [x] **METRIC-03**: Retro terminal session hits / visitor counter badge
-- [x] **METRIC-04**: Recent Git activity stream displaying recent commits and merged PRs formatted as `git log --graph --oneline`
+- [ ] **STAT-01**: GitHub GraphQL integration to query live statistics:
+  - Total public repositories and contributed repositories
+  - Total stars accumulated across user repositories
+  - Total commits
+  - Total followers
+  - Total lines of code additions `++` and deletions `--`
+  - Dynamic uptime calculation
+- [ ] **STAT-02**: Dynamic injection into SVG text nodes with automatic dot-leader justification (preserving fixed character width across varying number lengths).
 
-### Automation & Workflows (AUTO)
+### README & Clean Up
 
-- [x] **AUTO-01**: Standalone Python update engine (`scripts/update_profile.py`) querying GitHub GraphQL API with rate-limit and error handling
-- [x] **AUTO-02**: Scheduled GitHub Actions workflow (`.github/workflows/profile-updater.yml`) running on daily cron and manual trigger (`workflow_dispatch`)
-- [x] **AUTO-03**: Automated git commit and push step within the workflow running under standard `GITHUB_TOKEN` permissions with zero hosting cost
+- [ ] **DOC-01**: `README.md` simplified to a single `<picture>` block with `(prefers-color-scheme: dark)` pointing to `dark_mode.svg` and `light_mode.svg`, linked to the user's profile.
+- [ ] **DOC-02**: Completely remove all fake commit graphs, fake article logs, visitor counters, and fragmented SVG cards.
 
-### Skills & Content Extensibility (CONTENT)
+### CI/CD Automation
 
-- [x] **CONTENT-01**: Plug-and-play blog / article section ready to pull RSS or markdown links
-- [x] **CONTENT-02**: Terminal-themed categorized skills matrix (AI & Data Science, Backend & Systems, SQA & Automation, Embedded/IoT)
-
-## v2 Requirements
-
-Deferred to future release. Tracked but not in current roadmap.
-
-### Interactive & Multimedia (EXTRA)
-
-- **EXTRA-01**: Animated contribution snake game customized with terminal green/amber colorway
-- **EXTRA-02**: Spotify / Music player terminal card showing currently playing track
+- [ ] **AUTO-01**: GitHub Actions workflow `.github/workflows/profile-updater.yml` updated to execute `scripts/build_profile.py` daily and commit updated SVGs and README when stats change.
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
-| Feature | Reason |
-|---------|--------|
-| GitHub Profile Trophies | Explicitly rejected by user to avoid visual clutter and maintain minimalist technical feel |
-| Mismatched Graphical Badges | Bright pastel third-party badges violate the strict terminal aesthetic rule |
-| Paid Cloud / Hosting Services | All automation must execute free of charge using GitHub Actions public runner minutes |
+- Faux macOS title bars and traffic light buttons
+- Multiple SVG cards
+- Third-party hit counters (like Komarev)
+- Fabricated commit or article feeds
 
 ## Traceability
 
-Which phases cover which requirements. Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HERO-01 | Phase 1 | Complete |
-| HERO-02 | Phase 1 | Complete |
-| HERO-03 | Phase 1 | Complete |
-| HERO-04 | Phase 2 | Complete |
-| HERO-05 | Phase 2 | Complete |
-| AUTO-01 | Phase 2 | Complete |
-| PROJ-01 | Phase 3 | Complete |
-| PROJ-02 | Phase 3 | Complete |
-| PROJ-03 | Phase 3 | Complete |
-| METRIC-01 | Phase 4 | Complete |
-| METRIC-02 | Phase 4 | Complete |
-| METRIC-03 | Phase 4 | Complete |
-| METRIC-04 | Phase 4 | Complete |
-| CONTENT-01 | Phase 5 | Complete |
-| CONTENT-02 | Phase 5 | Complete |
-| AUTO-02 | Phase 6 | Complete |
-| AUTO-03 | Phase 6 | Complete |
-
-**Coverage:**
-
-- v1 requirements: 17 total
-- Mapped to phases: 17
-- Unmapped: 0
-
----
-*Requirements defined: 2026-11-06*
-*Last updated: 2026-11-06 after initialization*
+| CONF-01 | Phase 7 | Pending |
+| CONF-02 | Phase 7 | Pending |
+| NEO-01 | Phase 8 | Pending |
+| NEO-02 | Phase 8 | Pending |
+| STAT-01 | Phase 9 | Pending |
+| STAT-02 | Phase 9 | Pending |
+| DOC-01 | Phase 10 | Pending |
+| DOC-02 | Phase 10 | Pending |
+| AUTO-01 | Phase 11 | Pending |
