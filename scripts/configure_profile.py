@@ -122,6 +122,8 @@ def read_key(fd: int) -> str:
                 return "RIGHT"
             elif seq == "[D":
                 return "LEFT"
+            elif seq.startswith("[3"):
+                return "DELETE"
             elif seq.startswith("[5") or seq.startswith("[I"):
                 return "PAGE_UP"
             elif seq.startswith("[6") or seq.startswith("[G"):
@@ -146,7 +148,10 @@ def read_key(fd: int) -> str:
 
 
 def prompt_line_editor(tui: TerminalUI, title: str, prompt_label: str, initial_text: str = "") -> str:
-    """Interactive line editor with backspace, arrows, and home/end support in raw mode."""
+    """
+    Interactive line editor with visible hardware & software cursor, horizontal
+    scrolling, space insertion, backspace, delete, and readline keybindings.
+    """
     if not tui.is_tty or tui.fd is None:
         try:
             val = input(f"{prompt_label} [{initial_text}]: ").strip()
@@ -157,55 +162,98 @@ def prompt_line_editor(tui: TerminalUI, title: str, prompt_label: str, initial_t
     buf = list(initial_text)
     pos = len(buf)
 
-    while True:
-        cols, rows = shutil.get_terminal_size((80, 24))
-        lines = [
-            f"{AMBER}{BOLD}=== {title} ==={RESET}",
-            f"{MUTED}Edit text below. Press [Enter] to accept, [Esc] to cancel/keep original.{RESET}",
-            "",
-            f"{CYAN}{BOLD}{prompt_label}:{RESET}",
-        ]
-        disp = "".join(buf)
-        lines.append(f"  ❯ {BOLD}{disp}{RESET} ")
-        lines.append("")
-        lines.append(f"{MUTED}[Enter]: Submit  |  [Esc]: Keep '{initial_text}'  |  [Ctrl+U]: Clear{RESET}")
+    try:
+        while True:
+            cols, rows = shutil.get_terminal_size((80, 24))
+            prefix_str = "  ❯ "
+            prefix_len = 4
+            avail_width = max(10, cols - prefix_len - 2)
 
-        frame_lines = [pad_line(line, cols) for line in lines]
-        # Pad remaining screen lines to avoid debris
-        while len(frame_lines) < rows:
-            frame_lines.append(" " * cols)
+            # Horizontal scroll viewport
+            view_start = 0
+            if pos >= avail_width:
+                view_start = pos - avail_width + 1
+            visible_buf = buf[view_start : view_start + avail_width]
+            rel_pos = pos - view_start
 
-        frame = "\033[H" + "\n".join(frame_lines)
-        sys.stdout.write(frame)
-        sys.stdout.flush()
+            # Prominent visual cursor block (reverse video)
+            before_chars = "".join(visible_buf[:rel_pos])
+            if rel_pos < len(visible_buf):
+                cur_char = visible_buf[rel_pos]
+                after_chars = "".join(visible_buf[rel_pos + 1:])
+                cursor_char_rendered = f"\033[7m{cur_char}\033[0m"
+                edit_display = f"{before_chars}{cursor_char_rendered}{after_chars}"
+            else:
+                cursor_char_rendered = "\033[7m \033[0m"
+                edit_display = f"{before_chars}{cursor_char_rendered}"
 
-        key = read_key(tui.fd)
-        if key == "ENTER":
-            break
-        elif key == "ESC":
-            return initial_text
-        elif key == "CTRL_C":
-            return initial_text
-        elif key == "BACKSPACE":
-            if pos > 0:
-                buf.pop(pos - 1)
-                pos -= 1
-        elif key == "LEFT":
-            if pos > 0:
-                pos -= 1
-        elif key == "RIGHT":
-            if pos < len(buf):
+            lines = [
+                f"{AMBER}{BOLD}=== {title} ==={RESET}",
+                f"{MUTED}Edit text below. Press [Enter] to submit, [Esc] to cancel/keep original.{RESET}",
+                "",
+                f"{CYAN}{BOLD}{prompt_label}:{RESET}",
+                f"{prefix_str}{BOLD}{edit_display}{RESET}",
+                "",
+                f"{MUTED}[Enter]: Submit  |  [Esc]: Keep '{initial_text}'  |  [Ctrl+U]: Clear  |  [Ctrl+W]: Del Word{RESET}",
+            ]
+
+            frame_lines = [pad_line(line, cols) for line in lines]
+            # Pad remaining screen lines to avoid debris
+            while len(frame_lines) < rows:
+                frame_lines.append(" " * cols)
+
+            # Draw frame, then make hardware cursor visible and place it at (row 5, col prefix_len + 1 + rel_pos)
+            cursor_row = 5
+            cursor_col = prefix_len + 1 + rel_pos
+            frame = "\033[H" + "\n".join(frame_lines) + f"\033[?25h\033[{cursor_row};{cursor_col}H"
+            sys.stdout.write(frame)
+            sys.stdout.flush()
+
+            key = read_key(tui.fd)
+            if key == "ENTER":
+                break
+            elif key in ("ESC", "CTRL_C"):
+                return initial_text
+            elif key in ("SPACE", " "):
+                buf.insert(pos, " ")
                 pos += 1
-        elif key == "HOME":
-            pos = 0
-        elif key == "END":
-            pos = len(buf)
-        elif key == "\x15":  # Ctrl+U
-            buf = []
-            pos = 0
-        elif len(key) == 1 and 32 <= ord(key) <= 126:
-            buf.insert(pos, key)
-            pos += 1
+            elif key == "BACKSPACE":
+                if pos > 0:
+                    buf.pop(pos - 1)
+                    pos -= 1
+            elif key == "DELETE":
+                if pos < len(buf):
+                    buf.pop(pos)
+            elif key == "LEFT":
+                if pos > 0:
+                    pos -= 1
+            elif key == "RIGHT":
+                if pos < len(buf):
+                    pos += 1
+            elif key in ("HOME", "\x01"):  # Home or Ctrl+A
+                pos = 0
+            elif key in ("END", "\x05"):   # End or Ctrl+E
+                pos = len(buf)
+            elif key == "\x15":            # Ctrl+U (clear line)
+                buf = []
+                pos = 0
+            elif key == "\x0b":            # Ctrl+K (kill line to end)
+                buf = buf[:pos]
+            elif key == "\x17":            # Ctrl+W (delete previous word)
+                while pos > 0 and buf[pos - 1] == " ":
+                    buf.pop(pos - 1)
+                    pos -= 1
+                while pos > 0 and buf[pos - 1] != " ":
+                    buf.pop(pos - 1)
+                    pos -= 1
+            elif len(key) == 1 and 32 <= ord(key) <= 126:
+                buf.insert(pos, key)
+                pos += 1
+    finally:
+        # Hide hardware cursor again for clean list navigation
+        if tui.is_tty:
+            sys.stdout.write("\033[?25l")
+            sys.stdout.flush()
 
     result = "".join(buf).strip()
     return result if result else initial_text
@@ -298,7 +346,7 @@ def select_projects_tui(tui: TerminalUI, repos: list[dict], current_selected_nam
         lines.append(f"{MUTED}Repositories ordered by latest commit. Toggle with [Space], search with [/], finish with [Enter].{RESET}")
 
         # Status Line
-        search_status = f"{CYAN}Search: [{search_query}_]{RESET} " if search_mode else (f"{MUTED}Filter: '{search_query}' (press / to edit){RESET} " if search_query else f"{MUTED}Filter: [press /]{RESET} ")
+        search_status = f"{CYAN}Search: [{search_query}\033[7m \033[0m]{RESET} " if search_mode else (f"{MUTED}Filter: '{search_query}' (press / to edit){RESET} " if search_query else f"{MUTED}Filter: [press /]{RESET} ")
         sel_count_color = GREEN if 1 <= len(selected_set) <= 5 else (RED if len(selected_set) > 5 else AMBER)
         lines.append(f"Selected: {sel_count_color}{BOLD}{len(selected_set)}/5 projects{RESET}  |  Total: {len(repos)} repos  |  {search_status}")
         lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
@@ -358,6 +406,9 @@ def select_projects_tui(tui: TerminalUI, repos: list[dict], current_selected_nam
         if search_mode:
             if key in ("ENTER", "ESC"):
                 search_mode = False
+            elif key in ("SPACE", " "):
+                search_query += " "
+                cursor = 0
             elif key == "BACKSPACE":
                 if search_query:
                     search_query = search_query[:-1]
@@ -385,7 +436,7 @@ def select_projects_tui(tui: TerminalUI, repos: list[dict], current_selected_nam
             cursor = 0
         elif key in ("G", "END"):
             cursor = max(0, len(filtered_indices) - 1)
-        elif key == "SPACE":
+        elif key in ("SPACE", " "):
             if filtered_indices and 0 <= cursor < len(filtered_indices):
                 repo_name = repos[filtered_indices[cursor]]["name"]
                 if repo_name in selected_set:

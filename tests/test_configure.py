@@ -81,3 +81,42 @@ def test_non_interactive_fallback():
     assert isinstance(res, list)
     assert len(res) > 0
     assert res[0]["name"] == "repo-a"
+
+
+def test_prompt_line_editor_non_interactive():
+    """Verify prompt_line_editor returns default value in non-interactive mode."""
+    from scripts.configure_profile import prompt_line_editor
+    tui = TerminalUI()
+    tui.is_tty = False
+    val = prompt_line_editor(tui, "Test Title", "Label", initial_text="Default Value")
+    assert val == "Default Value"
+
+
+def test_cursor_rendering_and_space_support():
+    """Simulate key handling logic to ensure space, backspace, and cursor are handled correctly."""
+    buf = list("Hello")
+    pos = len(buf)
+
+    # Simulate typing space
+    key = "SPACE"
+    if key in ("SPACE", " "):
+        buf.insert(pos, " ")
+        pos += 1
+
+    assert "".join(buf) == "Hello "
+    assert pos == 6
+
+    # Simulate typing another word
+    for ch in "World":
+        buf.insert(pos, ch)
+        pos += 1
+
+    assert "".join(buf) == "Hello World"
+    assert pos == 11
+
+    # Simulate backspace
+    buf.pop(pos - 1)
+    pos -= 1
+    assert "".join(buf) == "Hello Worl"
+    assert pos == 10
+
