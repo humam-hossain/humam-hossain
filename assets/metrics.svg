@@ -55,14 +55,14 @@
   <line x1="395" y1="115" x2="805" y2="115" stroke="#30363d" stroke-width="1" />
   <text x="400" y="140" class="mono lang-name"><tspan fill="#3572A5">● </tspan>Python</text>
   <rect x="540" y="131" width="200" height="8" rx="3" ry="3" fill="#21262d" />
-  <rect x="540" y="131" width="104" height="8" rx="3" ry="3" fill="#3572A5" />
-  <text x="800" y="140" class="mono lang-pct">52.0%</text>
-  <text x="400" y="168" class="mono lang-name"><tspan fill="#89e051">● </tspan>Shell</text>
+  <rect x="540" y="131" width="128" height="8" rx="3" ry="3" fill="#3572A5" />
+  <text x="800" y="140" class="mono lang-pct">64.0%</text>
+  <text x="400" y="168" class="mono lang-name"><tspan fill="#f1e05a">● </tspan>JavaScript</text>
   <rect x="540" y="159" width="200" height="8" rx="3" ry="3" fill="#21262d" />
-  <rect x="540" y="159" width="67" height="8" rx="3" ry="3" fill="#89e051" />
-  <text x="800" y="168" class="mono lang-pct">33.6%</text>
-  <text x="400" y="196" class="mono lang-name"><tspan fill="#555555">● </tspan>C</text>
+  <rect x="540" y="159" width="67" height="8" rx="3" ry="3" fill="#f1e05a" />
+  <text x="800" y="168" class="mono lang-pct">33.8%</text>
+  <text x="400" y="196" class="mono lang-name"><tspan fill="#89e051">● </tspan>Shell</text>
   <rect x="540" y="187" width="200" height="8" rx="3" ry="3" fill="#21262d" />
-  <rect x="540" y="187" width="28" height="8" rx="3" ry="3" fill="#555555" />
-  <text x="800" y="196" class="mono lang-pct">14.4%</text>
+  <rect x="540" y="187" width="4" height="8" rx="3" ry="3" fill="#89e051" />
+  <text x="800" y="196" class="mono lang-pct">2.1%</text>
 </svg>

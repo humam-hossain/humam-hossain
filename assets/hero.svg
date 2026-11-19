@@ -46,7 +46,7 @@
     <text x="310" y="155" class="mono"><tspan class="key" xml:space="preserve">Host:      </tspan><tspan class="val">Workstation</tspan></text>
     <text x="310" y="180" class="mono"><tspan class="key" xml:space="preserve">Kernel:    </tspan><tspan class="val">AI &amp; Robotics</tspan></text>
     <text x="310" y="205" class="mono"><tspan class="key" xml:space="preserve">Focus:     </tspan><tspan class="val">Autonomous Systems, IoT &amp; Cloud</tspan></text>
-    <text x="310" y="230" class="mono"><tspan class="key" xml:space="preserve">Uptime:    </tspan><tspan id="val-uptime" class="val">6 yrs, 1 mo, 28 days</tspan></text>
+    <text x="310" y="230" class="mono"><tspan class="key" xml:space="preserve">Uptime:    </tspan><tspan id="val-uptime" class="val">6 yrs, 2 mos, 1 day</tspan></text>
     <text x="310" y="255" class="mono"><tspan class="key" xml:space="preserve">Shell:     </tspan><tspan class="val">zsh 5.9</tspan></text>
     <text x="310" y="280" class="mono"><tspan class="key" xml:space="preserve">Contact:   </tspan><tspan class="val">humam@... / in/humam-hossain</tspan></text>
     <text x="310" y="305" class="mono"><tspan class="key" xml:space="preserve">LOC:       </tspan><tspan id="val-loc-add" class="loc-add">++55,543</tspan><tspan class="val"> / </tspan><tspan id="val-loc-del" class="loc-del">--656</tspan></text>
