@@ -47,19 +47,23 @@
   "featured_projects": [
     {
       "repo": "adb-permission-manager",
-      "description": "Audit and control Android runtime permissions & hidden AppOps via ADB. Save hardware-tied JSON profiles with automated drift detection. No root required."
+      "description": "Keyboard-driven TUI to audit & manage Android AppOps without root"
     },
     {
       "repo": "Voice",
-      "description": "Desktop-global push-to-talk STT and TTS hotkeys for Linux"
+      "description": "Desktop-global push-to-talk STT & TTS hotkeys for Linux"
     },
     {
       "repo": "arduino-env-hazard",
-      "description": "Unix software & tools"
+      "description": "IoT environmental hazard telemetry via Arduino & ESP8266"
     },
     {
       "repo": "antigravity-cli-statusline",
-      "description": "An advanced, responsive, and high-information statusline plugin for Antigravity CLI"
+      "description": "Responsive statusline & telemetry plugin for Antigravity CLI"
+    },
+    {
+      "repo": "Supermarket-Management-System",
+      "description": "Java desktop GUI for retail inventory & order processing"
     }
   ],
   "contacts": [
