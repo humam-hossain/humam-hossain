@@ -299,6 +299,55 @@ def fetch_user_repos(username: str) -> list[dict]:
     return all_repos
 
 
+def prepare_repos_list(fetched_repos: list[dict], current_featured: list[dict]) -> tuple[list[dict], list[str]]:
+    """
+    Ensures repositories from the last configuration change come up first,
+    preserving their custom descriptions and selected state, followed by
+    the remaining repositories ordered by latest commit (pushed_at descending).
+    """
+    repo_map = {r["name"]: dict(r) for r in fetched_repos}
+
+    ordered_repos = []
+    selected_names = []
+    seen = set()
+
+    # 1. Place all projects from the user's last change at the top in their saved order
+    for p in current_featured:
+        name = p.get("repo")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        selected_names.append(name)
+
+        # Merge live repo metadata if available, but preserve custom description
+        if name in repo_map:
+            repo_entry = dict(repo_map[name])
+            if p.get("description"):
+                repo_entry["description"] = p["description"]
+            ordered_repos.append(repo_entry)
+        else:
+            ordered_repos.append({
+                "name": name,
+                "description": p.get("description") or "Unix software & tools",
+                "stars": 0,
+                "language": "Code",
+                "pushed_at": "",
+                "fork": False,
+            })
+
+    # 2. Append all remaining repositories ordered by latest push date
+    for r in fetched_repos:
+        if r["name"] not in seen:
+            seen.add(r["name"])
+            ordered_repos.append(dict(r))
+
+    # Fallback default selection if nothing was previously configured
+    if not selected_names and ordered_repos:
+        selected_names = [r["name"] for r in ordered_repos[:4]]
+
+    return ordered_repos, selected_names
+
+
 # ==============================================================================
 # Step 1: Featured Projects Multi-Select (hjkl navigation, Space toggle, / search)
 # ==============================================================================
@@ -510,7 +559,7 @@ def edit_project_descriptions_tui(tui: TerminalUI, chosen_repos: list[dict], cur
         lines.append(f"{cont_arrow} {cont_btn}")
         lines.append("")
         lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
-        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Edit / Select  {BOLD}[c]{RESET} Continue")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[J/K]{RESET} Reorder  {BOLD}[Enter]{RESET} Edit  {BOLD}[c]{RESET} Continue")
 
         frame_lines = [pad_line(line, cols) for line in lines]
         while len(frame_lines) < rows:
@@ -524,6 +573,14 @@ def edit_project_descriptions_tui(tui: TerminalUI, chosen_repos: list[dict], cur
             cursor = min(total_items - 1, cursor + 1)
         elif key in ("k", "UP"):
             cursor = max(0, cursor - 1)
+        elif key in ("K", "U"):
+            if 0 < cursor < len(projects_data):
+                projects_data[cursor], projects_data[cursor - 1] = projects_data[cursor - 1], projects_data[cursor]
+                cursor -= 1
+        elif key in ("J", "D"):
+            if 0 <= cursor < len(projects_data) - 1:
+                projects_data[cursor], projects_data[cursor + 1] = projects_data[cursor + 1], projects_data[cursor]
+                cursor += 1
         elif key in ("c", "C"):
             break
         elif key == "ENTER":
@@ -663,15 +720,15 @@ def setup_system_info_tui(tui: TerminalUI, current_config: dict) -> tuple[dict, 
         {"key": "Uptime Start Date", "value": uptime_start},
     ]
 
+    # Dynamically preserve any additional custom fields from last configuration
+    standard_keys = {"OS", "Host", "Kernel", "IDE", "Shell"}
+    for extra in sys_info:
+        if extra.get("key") not in standard_keys and extra.get("key"):
+            fields.append({"key": extra["key"], "value": extra.get("value", "")})
+
     if not tui.is_tty or tui.fd is None:
         user_info["prompt_header"] = prompt_hdr
-        return user_info, [
-            {"key": "OS", "value": def_os},
-            {"key": "Host", "value": def_host},
-            {"key": "Kernel", "value": def_kernel},
-            {"key": "IDE", "value": def_ide},
-            {"key": "Shell", "value": def_shell},
-        ], telemetry
+        return user_info, [dict(x) for x in sys_info], telemetry
 
     cursor = 0
     while True:
@@ -730,6 +787,8 @@ def setup_system_info_tui(tui: TerminalUI, current_config: dict) -> tuple[dict, 
         {"key": "IDE", "value": fields[4]["value"]},
         {"key": "Shell", "value": fields[5]["value"]},
     ]
+    for extra_field in fields[7:]:
+        compiled_sys_info.append({"key": extra_field["key"], "value": extra_field["value"]})
     telemetry["uptime_start_date"] = fields[6]["value"]
     telemetry["show_uptime"] = True
     telemetry["show_github_stats"] = True
@@ -887,17 +946,25 @@ MONOGRAM_ASCII = [
 
 def select_ascii_art_tui(tui: TerminalUI, current_config: dict) -> list[str]:
     """Allows selecting ASCII art style with real-time preview."""
-    existing_custom = current_config.get("ascii_art", ARCH_ASCII)
+    existing_custom = current_config.get("ascii_art")
     options = [
         {"name": "Arch Linux Logo (Authentic Unix Neofetch)", "lines": ARCH_ASCII},
         {"name": "Monogram Banner (HUMAM HOSSAIN // WORKSTATION)", "lines": MONOGRAM_ASCII},
-        {"name": "Custom Artwork (Keep current from profile_config.json)", "lines": existing_custom},
+        {"name": "Custom Artwork (Keep current from profile_config.json)", "lines": existing_custom or ARCH_ASCII},
     ]
 
-    if not tui.is_tty or tui.fd is None:
-        return options[0]["lines"]
-
+    # Detect which option matches the last saved change so it comes up first
     cursor = 0
+    if existing_custom:
+        if existing_custom == MONOGRAM_ASCII:
+            cursor = 1
+        elif existing_custom == ARCH_ASCII:
+            cursor = 0
+        else:
+            cursor = 2
+
+    if not tui.is_tty or tui.fd is None:
+        return options[cursor]["lines"]
     while True:
         cols, rows = shutil.get_terminal_size((80, 24))
 
@@ -974,12 +1041,11 @@ def main() -> int:
         ]
 
     current_featured = current_config.get("featured_projects", [])
-    current_selected_names = [p.get("repo") for p in current_featured if p.get("repo")]
-    if not current_selected_names:
-        current_selected_names = [r["name"] for r in repos[:4]]
+    # Always prioritize the last change: projects from profile_config.json come up first
+    repos, current_selected_names = prepare_repos_list(repos, current_featured)
 
     with TerminalUI() as tui:
-        # 1. Select Projects (hjkl multi-select list ordered by latest commit)
+        # 1. Select Projects (last configured projects come up first, followed by latest commits)
         chosen_repos = select_projects_tui(tui, repos, current_selected_names)
 
         # 1b. Project Descriptions

@@ -24,6 +24,8 @@ from scripts.configure_profile import (
     TerminalUI,
     fetch_user_repos,
     pad_line,
+    prepare_repos_list,
+    select_ascii_art_tui,
     select_projects_tui,
     strip_ansi,
 )
@@ -119,4 +121,48 @@ def test_cursor_rendering_and_space_support():
     pos -= 1
     assert "".join(buf) == "Hello Worl"
     assert pos == 10
+
+
+def test_prepare_repos_list_prioritizes_last_change():
+    """Verify that projects configured in the last change come up first with custom descriptions."""
+    fetched = [
+        {"name": "repo-newest", "pushed_at": "2026-11-19", "description": "Raw 1", "language": "Python"},
+        {"name": "repo-middle", "pushed_at": "2026-11-15", "description": "Raw 2", "language": "C++"},
+        {"name": "repo-oldest", "pushed_at": "2026-11-01", "description": "Raw 3", "language": "Shell"},
+    ]
+    last_featured = [
+        {"repo": "repo-oldest", "description": "My Custom Description for Oldest"},
+        {"repo": "repo-middle", "description": "My Custom Description for Middle"},
+    ]
+
+    ordered, selected_names = prepare_repos_list(fetched, last_featured)
+
+    # 1. The last configured projects must come up first
+    assert ordered[0]["name"] == "repo-oldest"
+    assert ordered[0]["description"] == "My Custom Description for Oldest"
+    assert ordered[1]["name"] == "repo-middle"
+    assert ordered[1]["description"] == "My Custom Description for Middle"
+
+    # 2. Remaining repos follow
+    assert ordered[2]["name"] == "repo-newest"
+
+    # 3. Selected names contains the last configured repos
+    assert selected_names == ["repo-oldest", "repo-middle"]
+
+
+def test_select_ascii_art_preserves_last_change():
+    """Verify that select_ascii_art_tui preserves and defaults to whatever art was previously saved."""
+    tui = TerminalUI()
+    tui.is_tty = False
+
+    # When config had Monogram
+    cfg_monogram = {"ascii_art": MONOGRAM_ASCII}
+    result_monogram = select_ascii_art_tui(tui, cfg_monogram)
+    assert result_monogram == MONOGRAM_ASCII
+
+    # When config had Arch
+    cfg_arch = {"ascii_art": ARCH_ASCII}
+    result_arch = select_ascii_art_tui(tui, cfg_arch)
+    assert result_arch == ARCH_ASCII
+
 

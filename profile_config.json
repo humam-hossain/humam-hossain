@@ -46,20 +46,20 @@
   ],
   "featured_projects": [
     {
-      "repo": "humam-hossain",
-      "description": "Portfolio"
-    },
-    {
       "repo": "adb-permission-manager",
       "description": "Audit and control Android runtime permissions & hidden AppOps via ADB. Save hardware-tied JSON profiles with automated drift detection. No root required."
     },
     {
-      "repo": ".dotfiles",
+      "repo": "Voice",
+      "description": "Desktop-global push-to-talk STT and TTS hotkeys for Linux"
+    },
+    {
+      "repo": "arduino-env-hazard",
       "description": "Unix software & tools"
     },
     {
-      "repo": "Voice",
-      "description": "Desktop-global push-to-talk STT and TTS hotkeys for Linux"
+      "repo": "antigravity-cli-statusline",
+      "description": "An advanced, responsive, and high-information statusline plugin for Antigravity CLI"
     }
   ],
   "contacts": [
@@ -86,30 +86,19 @@
     "show_loc": true
   },
   "ascii_art": [
-    "                   -`                 ",
-    "                  .o+`                ",
-    "                 `ooo/                ",
-    "                `+oooo:               ",
-    "               `+oooooo:              ",
-    "               -+oooooo+:             ",
-    "             `/:-:++oooo+:            ",
-    "            `/++++/+++++++:           ",
-    "           `/++++++++++++++:          ",
-    "          `/+++ooooooooooooo/`        ",
-    "         ./ooosssso++osssssso+`       ",
-    "        .oossssso-````/ossssss+`      ",
-    "       -osssssso.      :ssssssso.     ",
-    "      :osssssss/        osssso+++.    ",
-    "     /ossssssss/        +ssssooo/-    ",
-    "   `/ossssso+/:-        -:/+osssso+-  ",
-    "  `+sso+:-`                 `.-/+oso: ",
-    " `++:.                           `-/+/",
-    " .`                                 `/",
-    "                                      ",
-    "         HUMAM HOSSAIN // WORKSTATION ",
-    "         ============================ ",
-    "         [AI & ROBOTICS / SYSTEMS]    ",
-    "                                      ",
-    "            github.com/humam-hossain  "
+    "   \u2584\u2584     \u2584\u2584   ",
+    "   \u2588\u2588     \u2588\u2588   ",
+    "   \u2588\u2588     \u2588\u2588   ",
+    "   \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588   ",
+    "   \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588   ",
+    "   \u2588\u2588     \u2588\u2588   ",
+    "   \u2588\u2588     \u2588\u2588   ",
+    "   \u2580\u2580     \u2580\u2580 _ ",
+    "               ",
+    "  HUMAM HOSSAIN",
+    "  ============= ",
+    "  [AI & ROBOT] ",
+    "  arch-linux-64",
+    "  workstation  "
   ]
 }

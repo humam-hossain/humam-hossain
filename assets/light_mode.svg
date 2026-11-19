@@ -17,31 +17,20 @@ text, tspan {white-space: pre;}
 </style>
 <rect width="985px" height="610px" fill="#f6f8fa" rx="15"/>
 <text x="15" y="30" fill="#24292f" class="ascii">
-<tspan x="15" y="30">                   -`                 </tspan>
-<tspan x="15" y="50">                  .o+`                </tspan>
-<tspan x="15" y="70">                 `ooo/                </tspan>
-<tspan x="15" y="90">                `+oooo:               </tspan>
-<tspan x="15" y="110">               `+oooooo:              </tspan>
-<tspan x="15" y="130">               -+oooooo+:             </tspan>
-<tspan x="15" y="150">             `/:-:++oooo+:            </tspan>
-<tspan x="15" y="170">            `/++++/+++++++:           </tspan>
-<tspan x="15" y="190">           `/++++++++++++++:          </tspan>
-<tspan x="15" y="210">          `/+++ooooooooooooo/`        </tspan>
-<tspan x="15" y="230">         ./ooosssso++osssssso+`       </tspan>
-<tspan x="15" y="250">        .oossssso-````/ossssss+`      </tspan>
-<tspan x="15" y="270">       -osssssso.      :ssssssso.     </tspan>
-<tspan x="15" y="290">      :osssssss/        osssso+++.    </tspan>
-<tspan x="15" y="310">     /ossssssss/        +ssssooo/-    </tspan>
-<tspan x="15" y="330">   `/ossssso+/:-        -:/+osssso+-  </tspan>
-<tspan x="15" y="350">  `+sso+:-`                 `.-/+oso: </tspan>
-<tspan x="15" y="370"> `++:.                           `-/+/</tspan>
-<tspan x="15" y="390"> .`                                 `/</tspan>
-<tspan x="15" y="410">                                      </tspan>
-<tspan x="15" y="430">         HUMAM HOSSAIN // WORKSTATION </tspan>
-<tspan x="15" y="450">         ============================ </tspan>
-<tspan x="15" y="470">         [AI &amp; ROBOTICS / SYSTEMS]    </tspan>
-<tspan x="15" y="490">                                      </tspan>
-<tspan x="15" y="510">            github.com/humam-hossain  </tspan>
+<tspan x="15" y="30">   ▄▄     ▄▄   </tspan>
+<tspan x="15" y="50">   ██     ██   </tspan>
+<tspan x="15" y="70">   ██     ██   </tspan>
+<tspan x="15" y="90">   █████████   </tspan>
+<tspan x="15" y="110">   █████████   </tspan>
+<tspan x="15" y="130">   ██     ██   </tspan>
+<tspan x="15" y="150">   ██     ██   </tspan>
+<tspan x="15" y="170">   ▀▀     ▀▀ _ </tspan>
+<tspan x="15" y="190">               </tspan>
+<tspan x="15" y="210">  HUMAM HOSSAIN</tspan>
+<tspan x="15" y="230">  ============= </tspan>
+<tspan x="15" y="250">  [AI &amp; ROBOT] </tspan>
+<tspan x="15" y="270">  arch-linux-64</tspan>
+<tspan x="15" y="290">  workstation  </tspan>
 </text>
 <text x="390" y="30" fill="#24292f">
 <tspan x="390" y="30">humam@workstation -——————————————————————————————————————-—-</tspan>
@@ -58,10 +47,10 @@ text, tspan {white-space: pre;}
 <tspan x="390" y="250" class="cc">. </tspan><tspan class="key">Technologies.SQA</tspan>:<tspan class="cc"> .......... </tspan><tspan class="value">PyTest, Jest, Static Analysis</tspan>
 <tspan x="390" y="270" class="cc">. </tspan>
 <tspan x="390" y="290">- Featured Projects -————————————————————————————————————-—-</tspan>
-<tspan x="390" y="310" class="cc">. </tspan><tspan class="key">humam-hossain</tspan>:<tspan class="cc"> ................................. </tspan><tspan class="value">Portfolio</tspan>
-<tspan x="390" y="330" class="cc">. </tspan><tspan class="key">adb-permission-manager</tspan>:<tspan class="cc"> </tspan><tspan class="value">Audit and control Android runtime permissions &amp; hidden AppOps via ADB. Save hardware-tied JSON profiles with automated drift detection. No root required.</tspan>
-<tspan x="390" y="350" class="cc">. </tspan><tspan class="key">.dotfiles</tspan>:<tspan class="cc"> ......................... </tspan><tspan class="value">Unix software &amp; tools</tspan>
-<tspan x="390" y="370" class="cc">. </tspan><tspan class="key">Voice</tspan>:<tspan class="cc"> </tspan><tspan class="value">Desktop-global push-to-talk STT and TTS hotkeys for Linux</tspan>
+<tspan x="390" y="310" class="cc">. </tspan><tspan class="key">adb-permission-manager</tspan>:<tspan class="cc"> </tspan><tspan class="value">Audit and control Android runtime permissions &amp; hidden AppOps via ADB. Save hardware-tied JSON profiles with automated drift detection. No root required.</tspan>
+<tspan x="390" y="330" class="cc">. </tspan><tspan class="key">Voice</tspan>:<tspan class="cc"> </tspan><tspan class="value">Desktop-global push-to-talk STT and TTS hotkeys for Linux</tspan>
+<tspan x="390" y="350" class="cc">. </tspan><tspan class="key">arduino-env-hazard</tspan>:<tspan class="cc"> ................ </tspan><tspan class="value">Unix software &amp; tools</tspan>
+<tspan x="390" y="370" class="cc">. </tspan><tspan class="key">antigravity-cli-statusline</tspan>:<tspan class="cc"> </tspan><tspan class="value">An advanced, responsive, and high-information statusline plugin for Antigravity CLI</tspan>
 <tspan x="390" y="390" class="cc">. </tspan>
 <tspan x="390" y="410">- Contact -——————————————————————————————————————————————-—-</tspan>
 <tspan x="390" y="430" class="cc">. </tspan><tspan class="key">Email</tspan>:<tspan class="cc"> .................. </tspan><tspan class="value">muhammed.humam.hossain@gmail.com</tspan>
