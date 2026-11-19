@@ -603,6 +603,152 @@ def edit_project_descriptions_tui(tui: TerminalUI, chosen_repos: list[dict], cur
 # Step 2: Technical Skills Categories (hjkl navigation, edit, add, delete)
 # ==============================================================================
 
+def parse_skills_items(items_str: str) -> list[str]:
+    """Splits comma-separated items into a list of clean strings."""
+    if not items_str:
+        return []
+    return [item.strip() for item in items_str.split(",") if item.strip()]
+
+
+def format_skills_items(items_list: list[str]) -> str:
+    """Combines a list of skill items into a clean comma-separated string."""
+    return ", ".join(items_list)
+
+
+def manage_category_skills_tui(tui: TerminalUI, skill_entry: dict) -> tuple[dict | None, bool]:
+    """
+    Sub-menu for a single skill category.
+    Allows:
+    - Deleting individual skills (d / x / Delete / Backspace)
+    - Adding new skills to this category
+    - Editing / renaming individual skills
+    - Renaming the category
+    - Deleting the entire category
+    Returns: (updated_skill_dict, was_category_deleted)
+    """
+    if not tui.is_tty or tui.fd is None:
+        return skill_entry, False
+
+    cat_name = skill_entry.get("category", "Skills")
+    skills_list = parse_skills_items(skill_entry.get("items", ""))
+
+    cursor = 0
+    status_msg = ""
+
+    while True:
+        cols, rows = shutil.get_terminal_size((80, 24))
+
+        btn_add_skill_idx = len(skills_list)
+        btn_rename_cat_idx = len(skills_list) + 1
+        btn_del_cat_idx = len(skills_list) + 2
+        btn_done_idx = len(skills_list) + 3
+        total_items = len(skills_list) + 4
+
+        if cursor >= total_items:
+            cursor = max(0, total_items - 1)
+
+        lines = [
+            f"{AMBER}{BOLD}=== Manage Category: {CYAN}{cat_name}{AMBER} ==={RESET}",
+            f"{MUTED}Select a skill to delete or edit. Use [d/x/Del] to delete a skill, [Enter] to choose action.{RESET}",
+            f"{MUTED}{'─' * (cols - 2)}{RESET}",
+        ]
+
+        if not skills_list:
+            lines.append(f"  {MUTED}(No skills in this category yet. Select [+ Add Skill] below){RESET}")
+        else:
+            lines.append(f"{BOLD}Skills in '{cat_name}' ({len(skills_list)} items):{RESET}")
+            for idx, item in enumerate(skills_list):
+                is_active = (cursor == idx)
+                arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+                tag = f"  {RED}[d/x to delete]{RESET}" if is_active else ""
+                item_txt = f"{BOLD}{CYAN if is_active else WHITE}{item}{RESET}"
+                lines.append(f"{arrow} • {item_txt}{tag}")
+
+        lines.append("")
+        # Add Skill Button
+        is_add_act = (cursor == btn_add_skill_idx)
+        add_arrow = f"{AMBER}{BOLD}❯{RESET}" if is_add_act else " "
+        add_btn = f"{AMBER}{BOLD}[ + Add Skill to {cat_name} ]{RESET}" if is_add_act else f"{MUTED}[ + Add Skill to {cat_name} ]{RESET}"
+        lines.append(f"{add_arrow} {add_btn}")
+
+        # Rename Category Button
+        is_ren_act = (cursor == btn_rename_cat_idx)
+        ren_arrow = f"{CYAN}{BOLD}❯{RESET}" if is_ren_act else " "
+        ren_btn = f"{CYAN}{BOLD}[ ✎ Rename Category '{cat_name}' ]{RESET}" if is_ren_act else f"{MUTED}[ ✎ Rename Category '{cat_name}' ]{RESET}"
+        lines.append(f"{ren_arrow} {ren_btn}")
+
+        # Delete Category Button
+        is_del_act = (cursor == btn_del_cat_idx)
+        del_arrow = f"{RED}{BOLD}❯{RESET}" if is_del_act else " "
+        del_btn = f"{RED}{BOLD}[ ✕ Delete Entire Category '{cat_name}' ]{RESET}" if is_del_act else f"{MUTED}[ ✕ Delete Entire Category '{cat_name}' ]{RESET}"
+        lines.append(f"{del_arrow} {del_btn}")
+
+        # Done / Back Button
+        is_done_act = (cursor == btn_done_idx)
+        done_arrow = f"{GREEN}{BOLD}❯{RESET}" if is_done_act else " "
+        done_btn = f"{GREEN}{BOLD}[ ✓ Save & Back to Categories ]{RESET}" if is_done_act else f"{MUTED}[ ✓ Save & Back to Categories ]{RESET}"
+        lines.append(f"{done_arrow} {done_btn}")
+
+        if status_msg:
+            lines.append("")
+            lines.append(f"{GREEN}{BOLD}{status_msg}{RESET}")
+            status_msg = ""
+
+        lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[d/x/Del]{RESET} Delete  {BOLD}[Enter]{RESET} Select/Edit  {BOLD}[b/Esc/c]{RESET} Back")
+
+        frame_lines = [pad_line(line, cols) for line in lines]
+        while len(frame_lines) < rows:
+            frame_lines.append(" " * cols)
+        frame = "\033[H" + "\n".join(frame_lines)
+        sys.stdout.write(frame)
+        sys.stdout.flush()
+
+        key = read_key(tui.fd)
+        if key in ("j", "DOWN"):
+            cursor = min(total_items - 1, cursor + 1)
+        elif key in ("k", "UP"):
+            cursor = max(0, cursor - 1)
+        elif key in ("b", "B", "ESC", "c", "C", "q", "Q"):
+            return {"category": cat_name, "items": format_skills_items(skills_list)}, False
+        elif key in ("d", "D", "x", "X", "DELETE", "BACKSPACE"):
+            if 0 <= cursor < len(skills_list):
+                deleted_skill = skills_list.pop(cursor)
+                status_msg = f"✓ Deleted skill '{deleted_skill}'"
+                if cursor >= len(skills_list):
+                    cursor = max(0, len(skills_list) - 1 if skills_list else 0)
+            elif cursor == btn_del_cat_idx:
+                return None, True
+        elif key == "ENTER":
+            if cursor == btn_done_idx:
+                return {"category": cat_name, "items": format_skills_items(skills_list)}, False
+            elif cursor == btn_del_cat_idx:
+                return None, True
+            elif cursor == btn_rename_cat_idx:
+                new_cat = prompt_line_editor(tui, "Rename Category", "Category Name", cat_name)
+                if new_cat.strip():
+                    cat_name = new_cat.strip()
+                    status_msg = f"✓ Renamed category to '{cat_name}'"
+            elif cursor == btn_add_skill_idx:
+                new_skill = prompt_line_editor(tui, f"Add Skill to '{cat_name}'", "Skill Name (e.g. Rust, Go, PyTorch)", "")
+                if new_skill.strip():
+                    added = parse_skills_items(new_skill)
+                    skills_list.extend(added)
+                    status_msg = f"✓ Added {len(added)} skill(s)"
+                    cursor = len(skills_list) - 1
+            elif 0 <= cursor < len(skills_list):
+                old_skill = skills_list[cursor]
+                edited = prompt_line_editor(tui, "Edit Skill", "Skill Name (leave empty to delete)", old_skill)
+                if not edited.strip():
+                    skills_list.pop(cursor)
+                    status_msg = f"✓ Deleted skill '{old_skill}'"
+                    if cursor >= len(skills_list):
+                        cursor = max(0, len(skills_list) - 1 if skills_list else 0)
+                else:
+                    skills_list[cursor] = edited.strip()
+                    status_msg = f"✓ Updated skill '{skills_list[cursor]}'"
+
+
 def setup_skills_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
     """Configures skills categories with hjkl navigation, inline editing, add, and delete."""
     skills = [dict(s) for s in current_config.get("skills", [
@@ -616,6 +762,7 @@ def setup_skills_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
         return skills
 
     cursor = 0
+    status_msg = ""
     while True:
         cols, rows = shutil.get_terminal_size((80, 24))
         # Items: [skills...] + [Add Category] + [Continue]
@@ -623,18 +770,25 @@ def setup_skills_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
         btn_cont_idx = len(skills) + 1
         total_items = len(skills) + 2
 
+        if cursor >= total_items:
+            cursor = max(0, total_items - 1)
+
         lines = [
             f"{AMBER}{BOLD}=== [Step 2/5] Technical Skills & Categories ==={RESET}",
-            f"{MUTED}Organize your skill lines. Press [Enter] to edit, [a] to add, [d] to delete, [c] to continue.{RESET}",
+            f"{MUTED}Organize skill categories. [Enter] Manage Skills / Rename, [d/x/Del] Delete Category, [a] Add.{RESET}",
             f"{MUTED}{'─' * (cols - 2)}{RESET}",
         ]
 
-        for idx, s in enumerate(skills):
-            is_active = (cursor == idx)
-            arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
-            cat_name = f"{BOLD}{CYAN if is_active else WHITE}{s.get('category')}{RESET}"
-            items_str = s.get("items", "")
-            lines.append(f"{arrow} {cat_name}: {items_str}")
+        if not skills:
+            lines.append(f"  {MUTED}(No skill categories defined. Select [+ Add New Skill Category] below){RESET}")
+        else:
+            for idx, s in enumerate(skills):
+                is_active = (cursor == idx)
+                arrow = f"{CYAN}{BOLD}❯{RESET}" if is_active else " "
+                cat_name = f"{BOLD}{CYAN if is_active else WHITE}{s.get('category')}{RESET}"
+                items_str = s.get("items", "")
+                tag = f"  {RED}[d/x to delete]{RESET}" if is_active else ""
+                lines.append(f"{arrow} {cat_name}: {items_str}{tag}")
 
         lines.append("")
         # Add button
@@ -649,8 +803,13 @@ def setup_skills_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
         cont_btn = f"{GREEN}{BOLD}[ Continue to System Telemetry -> ]{RESET}" if is_cont_active else f"{MUTED}[ Continue to System Telemetry -> ]{RESET}"
         lines.append(f"{cont_arrow} {cont_btn}")
 
+        if status_msg:
+            lines.append("")
+            lines.append(f"{GREEN}{BOLD}{status_msg}{RESET}")
+            status_msg = ""
+
         lines.append(f"{MUTED}{'─' * (cols - 2)}{RESET}")
-        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Edit  {BOLD}[a]{RESET} Add  {BOLD}[d]{RESET} Delete  {BOLD}[c]{RESET} Continue")
+        lines.append(f"{BOLD}[j/k or ↓/↑]{RESET} Nav  {BOLD}[Enter]{RESET} Manage  {BOLD}[d/x/Del]{RESET} Delete Category  {BOLD}[a]{RESET} Add  {BOLD}[c]{RESET} Continue")
 
         frame_lines = [pad_line(line, cols) for line in lines]
         while len(frame_lines) < rows:
@@ -668,26 +827,36 @@ def setup_skills_tui(tui: TerminalUI, current_config: dict) -> list[dict]:
             break
         elif key in ("a", "A"):
             new_cat = prompt_line_editor(tui, "New Skill Category", "Category Name (e.g. Languages.Real)", "Languages.Real")
-            new_items = prompt_line_editor(tui, "New Skill Category Items", f"Items for '{new_cat}'", "English, Bengali")
-            if new_cat and new_items:
-                skills.append({"category": new_cat, "items": new_items})
+            new_items = prompt_line_editor(tui, "New Skill Category Items", f"Items for '{new_cat}' (comma-separated)", "")
+            if new_cat.strip():
+                skills.append({"category": new_cat.strip(), "items": new_items.strip()})
+                status_msg = f"✓ Added category '{new_cat.strip()}'"
                 cursor = len(skills) - 1
-        elif key in ("d", "D", "x"):
-            if 0 <= cursor < len(skills) and len(skills) > 1:
-                skills.pop(cursor)
-                cursor = min(cursor, len(skills) - 1)
+        elif key in ("d", "D", "x", "X", "DELETE", "BACKSPACE"):
+            if 0 <= cursor < len(skills):
+                deleted_cat = skills.pop(cursor)
+                status_msg = f"✓ Deleted category '{deleted_cat.get('category')}'"
+                if cursor >= len(skills):
+                    cursor = max(0, len(skills) - 1 if skills else 0)
         elif key == "ENTER":
             if cursor == btn_cont_idx:
                 break
             elif cursor == btn_add_idx:
                 new_cat = prompt_line_editor(tui, "New Skill Category", "Category Name (e.g. Languages.Real)", "Languages.Real")
-                new_items = prompt_line_editor(tui, "New Skill Category Items", f"Items for '{new_cat}'", "English, Bengali")
-                if new_cat and new_items:
-                    skills.append({"category": new_cat, "items": new_items})
+                new_items = prompt_line_editor(tui, "New Skill Category Items", f"Items for '{new_cat}' (comma-separated)", "")
+                if new_cat.strip():
+                    skills.append({"category": new_cat.strip(), "items": new_items.strip()})
+                    status_msg = f"✓ Added category '{new_cat.strip()}'"
+                    cursor = len(skills) - 1
             elif 0 <= cursor < len(skills):
-                s = skills[cursor]
-                s["category"] = prompt_line_editor(tui, "Edit Skill Category Name", "Category Name", s.get("category", ""))
-                s["items"] = prompt_line_editor(tui, f"Edit Items for '{s['category']}'", "Items (comma-separated)", s.get("items", ""))
+                updated_entry, was_deleted = manage_category_skills_tui(tui, skills[cursor])
+                if was_deleted:
+                    deleted_cat = skills.pop(cursor)
+                    status_msg = f"✓ Deleted category '{deleted_cat.get('category')}'"
+                    if cursor >= len(skills):
+                        cursor = max(0, len(skills) - 1 if skills else 0)
+                elif updated_entry:
+                    skills[cursor] = updated_entry
 
     return skills
 

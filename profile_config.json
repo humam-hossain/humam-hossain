@@ -38,10 +38,6 @@
     {
       "category": "Technologies.AI",
       "items": "PyTorch, OpenCV, ROS2, Gazebo"
-    },
-    {
-      "category": "Technologies.SQA",
-      "items": "PyTest, Jest, Static Analysis"
     }
   ],
   "featured_projects": [

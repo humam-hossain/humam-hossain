@@ -317,17 +317,20 @@ def build_svg_lines(config: dict, stats: dict) -> list[dict]:
     lines.append({"type": "spacer"})
 
     # Skills
-    for skill in config.get("skills", []):
-        key, dots, val = justify_dot_leader(skill["category"], skill["items"])
-        lines.append({
-            "type": "kv",
-            "key": key,
-            "dots": dots,
-            "val": val,
-        })
-
-    # Blank spacer
-    lines.append({"type": "spacer"})
+    valid_skills = [
+        s for s in config.get("skills", [])
+        if s.get("category", "").strip() and s.get("items", "").strip()
+    ]
+    if valid_skills:
+        for skill in valid_skills:
+            key, dots, val = justify_dot_leader(skill["category"].strip(), skill["items"].strip())
+            lines.append({
+                "type": "kv",
+                "key": key,
+                "dots": dots,
+                "val": val,
+            })
+        lines.append({"type": "spacer"})
 
     # Featured Projects
     projects = config.get("featured_projects", [])

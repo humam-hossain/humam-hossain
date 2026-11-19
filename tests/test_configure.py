@@ -23,10 +23,13 @@ from scripts.configure_profile import (
     MONOGRAM_ASCII,
     TerminalUI,
     fetch_user_repos,
+    format_skills_items,
     pad_line,
+    parse_skills_items,
     prepare_repos_list,
     select_ascii_art_tui,
     select_projects_tui,
+    setup_skills_tui,
     strip_ansi,
 )
 
@@ -164,5 +167,57 @@ def test_select_ascii_art_preserves_last_change():
     cfg_arch = {"ascii_art": ARCH_ASCII}
     result_arch = select_ascii_art_tui(tui, cfg_arch)
     assert result_arch == ARCH_ASCII
+
+
+def test_parse_and_format_skills_items():
+    """Verify parsing and formatting of skills items string."""
+    raw = " Python, C/C++, Bash , JavaScript , "
+    parsed = parse_skills_items(raw)
+    assert parsed == ["Python", "C/C++", "Bash", "JavaScript"]
+
+    formatted = format_skills_items(parsed)
+    assert formatted == "Python, C/C++, Bash, JavaScript"
+
+    assert parse_skills_items("") == []
+    assert format_skills_items([]) == ""
+
+
+def test_delete_individual_skill():
+    """Verify deleting an individual skill from a category's parsed items."""
+    skills_list = ["Python", "C/C++", "Bash", "JavaScript"]
+    # User deletes "Bash" (index 2)
+    deleted = skills_list.pop(2)
+    assert deleted == "Bash"
+    assert skills_list == ["Python", "C/C++", "JavaScript"]
+    assert format_skills_items(skills_list) == "Python, C/C++, JavaScript"
+
+
+def test_delete_category():
+    """Verify deleting an entire category from the skills list."""
+    skills = [
+        {"category": "Languages.Code", "items": "Python, C++"},
+        {"category": "Technologies.AI", "items": "PyTorch, ROS2"},
+    ]
+    # Delete first category
+    deleted = skills.pop(0)
+    assert deleted["category"] == "Languages.Code"
+    assert len(skills) == 1
+    assert skills[0]["category"] == "Technologies.AI"
+
+    # Delete remaining category (should be allowed to reach 0 categories)
+    deleted_last = skills.pop(0)
+    assert deleted_last["category"] == "Technologies.AI"
+    assert len(skills) == 0
+
+
+def test_setup_skills_tui_non_interactive():
+    """Verify setup_skills_tui non-interactive fallback returns skills cleanly."""
+    tui = TerminalUI()
+    tui.is_tty = False
+
+    custom_skills = [{"category": "Languages.Custom", "items": "Rust, Zig"}]
+    res = setup_skills_tui(tui, {"skills": custom_skills})
+    assert res == custom_skills
+
 
 
