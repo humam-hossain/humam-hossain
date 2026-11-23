@@ -39,7 +39,7 @@ text, tspan {white-space: pre;}
 <tspan x="390" y="90" class="cc">. </tspan><tspan class="key">Kernel</tspan>:<tspan class="cc"> .......................... </tspan><tspan class="value">Systems, SQA &amp; Robotics</tspan>
 <tspan x="390" y="110" class="cc">. </tspan><tspan class="key">IDE</tspan>:<tspan class="cc"> ...................................... </tspan><tspan class="value">Neovim, VSCode</tspan>
 <tspan x="390" y="130" class="cc">. </tspan><tspan class="key">Shell</tspan>:<tspan class="cc"> ........................................... </tspan><tspan class="value">zsh 5.9</tspan>
-<tspan x="390" y="150" class="cc">. </tspan><tspan class="key">Uptime</tspan>:<tspan class="cc" id="age_data_dots"> ........................ </tspan><tspan class="value" id="age_data">6 years, 2 months, 2 days</tspan>
+<tspan x="390" y="150" class="cc">. </tspan><tspan class="key">Uptime</tspan>:<tspan class="cc" id="age_data_dots"> ........................ </tspan><tspan class="value" id="age_data">6 years, 2 months, 3 days</tspan>
 <tspan x="390" y="170" class="cc">. </tspan>
 <tspan x="390" y="190" class="cc">. </tspan><tspan class="key">Languages.Code</tspan>:<tspan class="cc"> .......... </tspan><tspan class="value">Python, C/C++, Bash, JavaScript</tspan>
 <tspan x="390" y="210" class="cc">. </tspan><tspan class="key">Languages.Systems</tspan>:<tspan class="cc"> ............. </tspan><tspan class="value">Linux, Docker, Git, CI/CD</tspan>
